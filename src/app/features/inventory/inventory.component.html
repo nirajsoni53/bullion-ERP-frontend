@@ -1,0 +1,200 @@
+<div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-visible flex flex-col min-h-[600px] relative">
+
+  <!-- 1. BULK ACTION TOOLBAR (Floating) -->
+  <app-bulk-action-toolbar
+    [count]="selectedIds.size"
+    (onSell)="sellSelected()"
+    (onCancel)="clearSelection()">
+  </app-bulk-action-toolbar>
+
+  <!-- 2. METAL SELECTOR (Level 1 Navigation) -->
+  <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 rounded-t-xl z-20">
+    <div class="flex items-center gap-2">
+      <button *ngFor="let m of metals" 
+              (click)="setActiveMetal(m)"
+              class="flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold transition-all duration-200 border"
+              [ngClass]="activeMetal.key === m.key 
+                ? 'bg-white shadow-sm ring-1 ring-slate-200 text-slate-800 border-slate-300' 
+                : 'bg-transparent text-slate-500 border-transparent hover:bg-slate-200/50'">
+        <span>{{ m.icon }}</span>
+        <span>{{ m.label }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 3. MAIN TOOLBAR (Level 2 Navigation + Search) -->
+  <app-inventory-toolbar
+    [page]="page"
+    [sections]="activeMetal.sections"
+    [activeSection]="activeSection"
+    [theme]="activeMetal.colorTheme"
+    [(searchTerm)]="searchTerm"
+    [(statusFilter)]="statusFilter"
+    (sectionChange)="setActiveSection($event)"
+    (onAddStock)="openAdd()"
+    (onBadlo)="openBadlo($event)">
+  </app-inventory-toolbar>
+
+  <!-- 4. MAIN TABLE -->
+  <div class="overflow-x-auto flex-1 min-h-[400px]">
+    <table class="w-full text-left border-collapse">
+      <thead class="bg-slate-50/50 text-xs uppercase text-slate-500 font-semibold sticky top-0 z-10 backdrop-blur-sm shadow-sm">
+        <tr>
+          <!-- CHECKBOX HEADER -->
+          <th class="p-4 w-10">
+             <input type="checkbox" [checked]="isAllSelected" [indeterminate]="isIndeterminate" (change)="toggleAllSelection($event)"
+             class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer">
+          </th>
+          <th class="p-4 w-16">#ID</th>
+          <th class="p-4">Status</th>
+          <th class="p-4">Date</th>
+          <th class="p-4">Party</th>
+          <th class="p-4 text-right">Gross</th>
+          <th class="p-4 text-center">Purity</th>
+          <th class="p-4 text-right">Fine</th>
+          <th class="p-4 text-right">Rate</th>
+          <th class="p-4 text-right">Cost</th>
+          <th class="p-4 text-right">Eff. Cost</th>
+          <th *ngIf="page === 'SALES'" class="p-4 text-right">Profit</th>
+          <th class="p-4 text-center">Settlement</th>
+          <th class="p-4 text-center w-12"></th>
+        </tr>
+      </thead>
+
+      <tbody class="divide-y divide-slate-100 text-sm text-slate-700">
+        <!-- EMPTY STATE -->
+        <tr *ngIf="filteredItems.length === 0">
+          <td colspan="14" class="p-12 text-center text-slate-400">
+            <div class="flex flex-col items-center gap-2">
+              <span class="text-3xl opacity-50">🔍</span>
+              <span>No {{ activeMetal.label }} found in {{ activeSection }}</span>
+            </div>
+          </td>
+        </tr>
+
+        <!-- ROWS -->
+        <tr *ngFor="let i of paginatedItems" (click)="openHistory(i)" 
+            [class.bg-blue-50]="selectedIds.has(i.id)" 
+            class="hover:bg-blue-50/30 cursor-pointer transition-colors duration-150 group relative">
+          
+          <!-- CHECKBOX ROW -->
+          <td class="p-4" (click)="$event.stopPropagation()">
+            <input type="checkbox" 
+                   [checked]="selectedIds.has(i.id)" 
+                   [disabled]="i.status !== 'STOCK'"
+                   (change)="toggleSelection(i.id)"
+                   class="w-4 h-4 rounded border-slate-300 focus:ring-blue-500 transition-colors"
+                   [class.cursor-pointer]="i.status === 'STOCK'"
+                   [class.text-blue-600]="i.status === 'STOCK'"
+                   [class.text-slate-300]="i.status !== 'STOCK'"
+                   [class.bg-slate-100]="i.status !== 'STOCK'"
+                   [class.cursor-not-allowed]="i.status !== 'STOCK'">
+          </td>
+
+          <td class="p-4 font-mono text-xs text-slate-400 group-hover:text-blue-600 font-bold">#{{ i.id }}</td>
+          
+          <!-- STATUS PILL (Updated with ORDER color) -->
+          <td class="p-4">
+            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold border tracking-wide"
+              [ngClass]="{
+                'bg-blue-50 text-blue-700 border-blue-100': i.status === 'STOCK',
+                'bg-green-50 text-green-700 border-green-100': i.status === 'SOLD',
+                'bg-orange-50 text-orange-700 border-orange-100': i.status === 'MELTED',
+                'bg-purple-50 text-purple-700 border-purple-100': i.status === 'BADLO',
+                'bg-teal-50 text-teal-700 border-teal-100': i.status === 'ORDER'
+              }">{{ i.status }}</span>
+          </td>
+
+          <td class="p-4 whitespace-nowrap text-slate-500 text-xs">{{ page === 'SALES' ? i.sale?.date : i.buyDate }}</td>
+          <td class="p-4 font-medium text-slate-900">{{ getPartyName(i) }}</td>
+          <td class="p-4 text-right font-mono text-slate-600">{{ fmtNum(i.grossWeightG) }}<span class="text-[10px] text-slate-400 ml-0.5">g</span></td>
+          <td class="p-4 text-center"><span class="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded text-xs font-medium">{{ fmtNum(i.actualPurity) }}</span></td>
+          <td class="p-4 text-right font-mono font-bold text-slate-900 bg-slate-50/50 group-hover:bg-blue-50/20">{{ fmtNum(i.fineG) }}</td>
+          <td class="p-4 text-right font-mono text-slate-500 text-xs">{{ fmtINR(page === 'SALES' ? i.sale?.sellRate : i.buyRate) }}</td>
+          <td class="p-4 text-right font-mono text-slate-600">{{ fmtINR(i.cost) }}</td>
+          <td class="p-4 text-right font-mono text-slate-500 text-xs">{{ fmtINR(i.actualCostPerG) }}</td>
+          <td *ngIf="page === 'SALES'" class="p-4 text-right font-mono font-bold" [class.text-green-600]="(i.sale?.profit || 0) > 0" [class.text-red-600]="(i.sale?.profit || 0) < 0">{{ fmtINR(i.sale?.profit) }}</td>
+          <td class="p-4 text-center">
+             <span *ngIf="getPending(i) > 0" class="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-100">⚠️ {{ fmtINR(getPending(i)) }}</span>
+             <span *ngIf="getPending(i) <= 0" class="inline-flex items-center gap-1 text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded border border-green-100">✓ Paid</span>
+          </td>
+
+          <!-- ACTION COLUMN (Row Kebab Menu) -->
+          <td class="p-4 text-center relative" (click)="$event.stopPropagation()">
+            <button (click)="toggleRowMenu($event, i.id)" class="p-1.5 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5"><path d="M10 3a1.5 1.5 0 110 3 1.5 1.5 0 010-3zM10 8.5a1.5 1.5 0 110 3 1.5 1.5 0 010-3zM11.5 15.5a1.5 1.5 0 10-3 0 1.5 1.5 0 003 0z" /></svg>
+            </button>
+            
+            <div *ngIf="activeRowMenuId === i.id" 
+                 class="absolute right-10 top-2 w-48 bg-white rounded-lg shadow-xl border border-slate-100 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100 origin-top-right text-left">
+              
+              <div class="px-3 py-2 bg-slate-50 border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                Actions #{{ i.id }}
+              </div>
+
+              <div class="p-1 space-y-0.5">
+                
+                <!-- 1. EDIT (Always Visible) -->
+                <button (click)="openEdit(i.id)" class="w-full text-left px-3 py-2 text-xs font-medium text-slate-700 hover:bg-blue-50 hover:text-blue-700 rounded-md flex items-center gap-2 transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 text-slate-400"><path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" /><path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z" /></svg>
+                  Edit Details
+                </button>
+
+                <!-- 2. ORDER SPECIFIC ACTIONS -->
+                <ng-container *ngIf="i.status === 'ORDER'">
+                   <button (click)="moveToStock(i.id)" class="w-full text-left px-3 py-2 text-xs font-bold text-blue-600 hover:bg-blue-50 rounded-md flex items-center gap-2">
+                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" /></svg>
+                     Move to Stock
+                   </button>
+                </ng-container>
+
+                <!-- 3. STOCK ONLY ACTIONS (Sell, Badlo, Melt) -->
+                <ng-container *ngIf="i.status === 'STOCK'">
+                  <button (click)="openSell(i.id)" class="w-full text-left px-3 py-2 text-xs font-medium text-slate-700 hover:bg-green-50 hover:text-green-700 rounded-md flex items-center gap-2 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 text-green-500"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.732 6.232a2.5 2.5 0 013.536 0 .75.75 0 101.06-1.06A4 4 0 006.5 8v.165c0 .364.034.728.1 1.085h-.35a.75.75 0 000 1.5h.739a5.016 5.016 0 01-.1 1.085v.165a2.5 2.5 0 003.536 3.536.75.75 0 10-1.06-1.06A1 1 0 018 13.165v-.165a6.51 6.51 0 00.1-1.085H7.75a.75.75 0 000-1.5h.739a6.516 6.516 0 00-.1-1.085V8a1 1 0 01.343-.768z" clip-rule="evenodd" /></svg>
+                    Mark as Sold
+                  </button>
+                  <button (click)="openBadlo(i.id)" class="w-full text-left px-3 py-2 text-xs font-medium text-slate-700 hover:bg-purple-50 hover:text-purple-700 rounded-md flex items-center gap-2 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 text-purple-500"><path fill-rule="evenodd" d="M2.24 6.8a.75.75 0 001.06-.04l1.95-2.1v8.59a.75.75 0 001.5 0V4.66l1.95 2.1a.75.75 0 101.1-1.02l-3.25-3.5a.75.75 0 00-1.1 0L2.2 5.74a.75.75 0 00.04 1.06zm8 6.4a.75.75 0 00-1.06.04l-1.95 2.1V6.75a.75.75 0 00-1.5 0v8.59l-1.95-2.1a.75.75 0 00-1.1 1.02l3.25 3.5a.75.75 0 001.1 0l3.25-3.5a.75.75 0 00-.04-1.06z" clip-rule="evenodd" /></svg>
+                    Convert (Badlo)
+                  </button>
+                  <button (click)="openMelt(i.id)" class="w-full text-left px-3 py-2 text-xs font-medium text-slate-700 hover:bg-orange-50 hover:text-orange-700 rounded-md flex items-center gap-2 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 text-orange-500"><path fill-rule="evenodd" d="M13.5 4.938a7 7 0 11-9.006 1.737c.202-.257.59-.218.793.084l2.463 3.696a1 1 0 01-.213 1.337l-1.356 1.017a1 1 0 00-.166 1.381l.962 1.254a1 1 0 001.482.105l3.075-2.65a1 1 0 00.003-1.488l-2.06-2.06a1 1 0 01.112-1.52l1.906-1.907a1 1 0 00-1.205-1.698 7 7 0 00-3.793.682zM12 7.75a.75.75 0 01.75-.75 6.5 6.5 0 016.5 6.5.75.75 0 01-1.5 0 5 5 0 00-5-5 .75.75 0 01-.75-.75z" clip-rule="evenodd" /></svg>
+                    Send to Melt
+                  </button>
+                </ng-container>
+
+                <div class="h-px bg-slate-100 my-1"></div>
+                
+                <!-- 3. DELETE (Always Visible) -->
+                <button (click)="deleteItem(i.id)" class="w-full text-left px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50 rounded-md flex items-center gap-2 transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" /></svg>
+                  Delete Entry
+                </button>
+
+              </div>
+            </div>
+          </td>
+
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 4. PAGINATION FOOTER -->
+  <app-pagination-footer
+    [page]="currentPage"
+    [pageSize]="pageSize"
+    [total]="filteredItems.length"
+    (pageChange)="setPage($event)"
+    (pageSizeChange)="onPageSizeChange($event)">
+  </app-pagination-footer>
+
+
+  <app-stock-entry-modal
+   [isOpen]="modals.addStock"
+   (close)="modals.addStock = false"
+   (save)="handleStockSave($event)"
+   (createNewParty)="openPartyModalFromInventory()">
+</app-stock-entry-modal>
+</div>

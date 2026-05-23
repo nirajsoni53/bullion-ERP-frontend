@@ -1,0 +1,98 @@
+<div *ngIf="isOpen" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+  <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"></div>
+
+  <!-- TOAST -->
+  <div *ngIf="toast.show" class="fixed top-6 right-6 z-[200] px-6 py-4 rounded-lg shadow-2xl animate-in fade-in slide-in-from-top-4 flex items-center gap-3" [ngClass]="toast.type === 'error' ? 'bg-red-50 border-l-4 border-red-500 text-red-700' : (toast.type === 'success' ? 'bg-green-50 border-l-4 border-green-500 text-green-700' : 'bg-yellow-50 border-l-4 border-yellow-500 text-yellow-700')">
+    <span class="font-bold text-sm">{{ toast.message }}</span>
+    <button (click)="toast.show = false" class="ml-2 font-bold opacity-60 hover:opacity-100">×</button>
+  </div>
+
+  <!-- CONFIRMATION -->
+  <div *ngIf="confirmation.show" class="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
+     <div class="bg-white rounded-xl shadow-2xl p-6 w-96 border border-slate-100">
+        <h3 class="text-lg font-bold text-slate-800 mb-2">Confirmation</h3>
+        <p class="text-sm text-slate-600 mb-6">{{ confirmation.message }}</p>
+        <div class="flex justify-end gap-3">
+           <button (click)="closeConfirmation(false)" class="px-4 py-2 text-slate-600 font-bold text-xs bg-slate-100 hover:bg-slate-200 rounded-lg">Cancel</button>
+           <button (click)="closeConfirmation(true)" class="px-4 py-2 text-white font-bold text-xs bg-blue-600 hover:bg-blue-700 rounded-lg">Yes, Save</button>
+        </div>
+     </div>
+  </div>
+
+  <!-- MAIN MODAL -->
+  <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col max-h-[95vh] z-[101]">
+    
+    <!-- HEADER -->
+    <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-20">
+      <div>
+        <h3 class="text-lg font-black text-slate-800 tracking-tight">Order Entry</h3>
+        <p class="text-xs text-slate-500 font-bold uppercase tracking-wide">Multi-Item Inward / Badlo</p>
+      </div>
+      <div class="flex items-center gap-3">
+         <div class="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+            <button (click)="formData.status = 'STOCK'" class="px-3 py-1 text-[10px] font-bold rounded transition-all" [ngClass]="formData.status === 'STOCK' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-400 hover:text-slate-600'">STOCK</button>
+            <button (click)="formData.status = 'ORDER'" class="px-3 py-1 text-[10px] font-bold rounded transition-all" [ngClass]="formData.status === 'ORDER' ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'">ORDER</button>
+         </div>
+         <button (click)="close.emit()" class="text-slate-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-full"><svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
+      </div>
+    </div>
+
+    <!-- BODY -->
+    <div class="overflow-y-auto custom-scrollbar flex-1 bg-slate-50">
+      
+      <app-party-order-info
+        [formData]="formData"
+        [selectedParty]="selectedParty"
+        [filteredParties]="filteredParties"
+        [isSearchOpen]="isPartySearchOpen"
+        [(isDescriptionEditable)]="isDescriptionEditable" 
+        (search)="onSearchInput($event)"
+        (select)="selectParty($event)"
+        (unselect)="unselectParty()"
+        (addParty)="openAddPartyModal()"
+        (focusSearch)="isPartySearchOpen = true">
+      </app-party-order-info>
+
+      <app-live-summary 
+        [formData]="formData">
+      </app-live-summary>
+
+      <app-item-entry
+        [items]="items"
+        (listChanged)="recalculateGlobals()">
+      </app-item-entry>
+
+      <app-badlo-calculator
+        [(isBadloEnabled)]="isBadloEnabled"
+        [hasBadloItems]="hasBadloItems"
+        [badloData]="badloData"
+        (triggerCalculation)="calculateBadlo()">
+      </app-badlo-calculator>
+
+      <app-settlement-payment
+        [(enableItemSettlement)]="enableItemSettlement"
+        [unsettledHistory]="unsettledHistory"
+        [selectedParty]="selectedParty"
+        [formData]="formData"
+        [totalSelectedPending]="totalSelectedPending"
+        [netPayableFinal]="netPayableFinal"
+        [totalBillAmount]="formData.totalBillAmount"
+        [totalSettlementSelected]="totalSettlementSelected"
+        [pendingBalanceFinal]="pendingBalanceFinal"
+        (toggleSettlement)="toggleSettlement()"
+        (toggleSelectAll)="toggleSelectAll($event)"
+        (itemSelect)="onItemSelect($event)"
+        (amountChange)="recalculateGlobals()">
+      </app-settlement-payment>
+
+    </div>
+
+    <!-- FOOTER -->
+    <div class="px-6 py-4 bg-white border-t border-slate-100 flex justify-end gap-3 sticky bottom-0 z-20">
+       <button (click)="close.emit()" class="px-6 py-2.5 text-slate-600 font-bold text-sm hover:bg-slate-100 rounded-lg">Cancel</button>
+       <button (click)="onSubmit()" class="px-8 py-2.5 bg-blue-600 text-white font-bold text-sm rounded-lg shadow-lg hover:bg-blue-700">Save Order</button>
+    </div>
+  </div>
+
+  <div class="relative z-[110]" *ngIf="isAddPartyModalOpen"><app-party-form [isOpen]="true" (close)="isAddPartyModalOpen = false" (save)="handleNewPartySave($event)"></app-party-form></div>
+</div>

@@ -1,0 +1,41 @@
+<div class="flex-1 overflow-x-auto">
+    <table class="w-full text-left border-collapse">
+        <thead class="bg-slate-50/50 text-xs uppercase text-slate-500 font-semibold border-b border-slate-100">
+        <tr>
+            <th class="p-4 w-12">#</th>
+            <th class="p-4">Party Name</th>
+            <th class="p-4">Location</th>
+            <th class="p-4">Contact</th>
+            <th class="p-4 text-center">Stats</th>
+            <th class="p-4 text-right">Balance</th>
+            <th class="p-4 text-right">Actions</th>
+        </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 text-sm text-slate-700">
+        <tr *ngFor="let p of parties" (click)="viewDetails.emit(p.id)" class="hover:bg-blue-50/30 cursor-pointer transition-colors group">
+            <td class="p-4"><div class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 font-bold flex items-center justify-center text-xs">{{ p.name.charAt(0) }}</div></td>
+            <td class="p-4">
+            <div class="font-bold text-slate-800 group-hover:text-blue-700">{{ p.name }}</div>
+            <div class="text-[10px] text-slate-400 uppercase">🏬 {{ p.shopName }}</div>
+            </td>
+            <td class="p-4 text-slate-500">{{ p.city }}</td>
+            <td class="p-4 font-mono text-xs text-slate-500">{{ p.contact }}</td>
+            <td class="p-4 text-center text-[10px] text-slate-400">
+                <span class="bg-slate-50 px-1.5 py-0.5 rounded border">⬇ {{ p.stats.totalBuy }}</span>
+                <span class="ml-1 bg-slate-50 px-1.5 py-0.5 rounded border">⬆ {{ p.stats.totalSell }}</span>
+            </td>
+            <td class="p-4 text-right font-mono font-bold">
+            <span *ngIf="p.stats.pendingAmount > 0" class="text-green-600">+{{ fmtINR(p.stats.pendingAmount) }}</span>
+            <span *ngIf="p.stats.pendingAmount < 0" class="text-red-600">{{ fmtINR(p.stats.pendingAmount) }}</span>
+            <span *ngIf="p.stats.pendingAmount === 0" class="text-slate-400 font-normal text-xs">Settled</span>
+            </td>
+            <td class="p-4 text-right">
+            <div class="flex items-center justify-end gap-2">
+                <button (click)="onEdit($event, p)" class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Edit"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
+                <button (click)="onDelete($event, p)" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Delete"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+            </div>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>

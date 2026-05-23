@@ -1,0 +1,118 @@
+<div class="p-4 border-b border-slate-100 flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center bg-white rounded-t-xl z-20">
+
+  <!-- LEFT: DYNAMIC SECTION TABS -->
+  <div *ngIf="page === 'INVENTORY'" class="inline-flex bg-slate-100 rounded-lg p-1 border border-slate-200 shadow-inner">
+    <button *ngFor="let s of sections" 
+            (click)="sectionChange.emit(s)"
+            class="relative px-5 py-2 rounded-md text-sm font-semibold transition-all duration-200 ease-out focus:outline-none capitalize"
+            [ngClass]="activeSection === s 
+              ? 'bg-white shadow-sm text-' + theme + '-700' 
+              : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'">
+      {{ s | lowercase }}
+    </button>
+  </div>
+  
+  <div *ngIf="page !== 'INVENTORY'"></div>
+
+  <!-- RIGHT: SEARCH + FILTERS -->
+  <div class="flex flex-wrap gap-3 w-full lg:w-auto items-center">
+    
+    <!-- 1. Search Box -->
+    <div class="relative flex-1 min-w-[200px]">
+      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        <svg class="h-4 w-4 text-slate-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+        </svg>
+      </div>
+      <!-- Note: using [ngModel] + (ngModelChange) explicitly for safety -->
+      <input 
+        [ngModel]="searchTerm" 
+        (ngModelChange)="updateSearch($event)"
+        placeholder="Search ID, Party..."
+        class="pl-9 pr-4 py-2.5 w-full border border-slate-200 rounded-lg text-sm outline-none transition-all placeholder-slate-400 focus:ring-2"
+        [ngClass]="'focus:border-' + theme + '-500 focus:ring-' + theme + '-500'" />
+    </div>
+
+    <!-- 2. Status Filter -->
+    <div class="relative status-dropdown-container z-30">
+      <button (click)="toggleStatusMenu()"
+        class="flex items-center justify-between gap-3 w-40 px-4 py-2.5 bg-white border border-slate-200 rounded-lg shadow-sm transition-all text-sm font-bold text-slate-700 hover:border-slate-300">
+        <div class="flex items-center gap-2">
+          <span [ngClass]="{
+            'bg-slate-500': statusFilter === 'ALL',
+            'bg-blue-500': statusFilter === 'STOCK',
+            'bg-green-500': statusFilter === 'SOLD',
+            'bg-purple-500': statusFilter === 'BADLO',
+            'bg-orange-500': statusFilter === 'MELTED',
+            'bg-teal-500': statusFilter === 'ORDER'
+          }" class="w-2 h-2 rounded-full"></span>
+          <span>{{ statusFilter === 'ALL' ? 'All Status' : statusFilter | titlecase }}</span>
+        </div>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 text-slate-400" [class.rotate-180]="isStatusMenuOpen"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" /></svg>
+      </button>
+
+      <!-- Dropdown Content -->
+      <div *ngIf="isStatusMenuOpen" class="absolute top-full right-0 mt-2 w-48 bg-white border border-slate-100 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150 z-50">
+        <div class="p-1 space-y-0.5">
+          <button (click)="setStatus('ALL')" class="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors" [class.bg-slate-50]="statusFilter === 'ALL'">
+            <span class="w-2 h-2 rounded-full bg-slate-400"></span><span class="text-slate-700">All Status</span>
+          </button>
+          <button (click)="setStatus('STOCK')" class="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg hover:bg-blue-50 transition-colors" [class.bg-blue-50]="statusFilter === 'STOCK'">
+            <span class="w-2 h-2 rounded-full bg-blue-500"></span><span class="text-slate-700">Stock Only</span>
+          </button>
+          <button (click)="setStatus('SOLD')" class="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg hover:bg-green-50 transition-colors" [class.bg-green-50]="statusFilter === 'SOLD'">
+            <span class="w-2 h-2 rounded-full bg-green-500"></span><span class="text-slate-700">Sold Out</span>
+          </button>
+          <button (click)="setStatus('BADLO')" class="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg hover:bg-purple-50 transition-colors" [class.bg-purple-50]="statusFilter === 'BADLO'">
+            <span class="w-2 h-2 rounded-full bg-purple-500"></span><span class="text-slate-700">Badlo / Swap</span>
+          </button>
+          <button (click)="setStatus('ORDER')" 
+                  class="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg hover:bg-teal-50 transition-colors" 
+                  [class.bg-teal-50]="statusFilter === 'ORDER'">
+            <span class="w-2 h-2 rounded-full bg-teal-500"></span>
+            <span class="text-slate-700">Orders</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Add Button (Dynamic Theme) -->
+    <div class="relative inline-block text-left menu-container z-50" *ngIf="page === 'INVENTORY'">
+      <button type="button" (click)="toggleAddMenu()"
+        class="flex items-center gap-2 px-5 py-2.5 text-white shadow-md rounded-full hover:-translate-y-0.5 transition-all duration-300 group"
+        [ngClass]="'bg-' + theme + '-600 hover:bg-' + theme + '-700 shadow-' + theme + '-200'">
+        <div class="p-0.5 bg-white/20 rounded-full">
+           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M12 3.75a.75.75 0 01.75.75v6.75h6.75a.75.75 0 010 1.5h-6.75v6.75a.75.75 0 01-1.5 0v-6.75H4.5a.75.75 0 010-1.5h6.75V4.5a.75.75 0 01.75-.75z" clip-rule="evenodd" /></svg>
+        </div>
+        <span class="font-bold tracking-tight text-sm">New Entry</span>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 text-blue-100 transition-transform duration-300" [class.rotate-180]="isAddMenuOpen">
+          <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+        </svg>
+      </button>
+
+      <!-- Dropdown Menu -->
+      <div *ngIf="isAddMenuOpen" class="absolute right-0 top-full mt-2 w-64 p-2 bg-white rounded-2xl shadow-xl border border-slate-100 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+         <div class="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Select Transaction</div>
+         
+         <button (click)="onAddStock.emit(); isAddMenuOpen = false" class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors text-left group">
+           <div class="w-8 h-8 flex items-center justify-center rounded-lg font-bold" [ngClass]="'bg-' + theme + '-100 text-' + theme + '-600'">Ag</div>
+           <div><div class="font-bold text-slate-700 text-sm">Add Stock</div><div class="text-[10px] text-slate-500">Regular Purchase</div></div>
+         </button>
+
+         <button (click)="onBadlo.emit('VENDOR'); isAddMenuOpen = false" class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-orange-50 transition-colors text-left group">
+           <div class="w-8 h-8 flex items-center justify-center rounded-lg bg-orange-100 text-orange-600">
+             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path d="M3.375 4.5C2.339 4.5 1.5 5.34 1.5 6.375V13.5h12V6.375c0-1.036-.84-1.875-1.875-1.875h-8.25zM13.5 15h-12v2.625c0 1.035.84 1.875 1.875 1.875h.375a3 3 0 116 0h3a.75.75 0 00.75-.75V15z" /></svg>
+           </div>
+           <div><div class="font-bold text-slate-700 text-sm">Vendor Badlo</div><div class="text-[10px] text-slate-500">Exchange</div></div>
+         </button>
+
+         <button (click)="onBadlo.emit('CUSTOMER'); isAddMenuOpen = false" class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-green-50 transition-colors text-left group">
+           <div class="w-8 h-8 flex items-center justify-center rounded-lg bg-green-100 text-green-600">
+             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0z" /></svg>
+           </div>
+           <div><div class="font-bold text-slate-700 text-sm">Customer Badlo</div><div class="text-[10px] text-slate-500">Swap</div></div>
+         </button>
+      </div>
+    </div>
+  </div>
+</div>

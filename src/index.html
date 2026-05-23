@@ -1,13 +1,33 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>MultiModuleApp</title>
-  <base href="/">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bullion Pro v5 - Complete Enterprise Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        body { background: #f3f4f6; color: #111827; }
+        .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas; font-variant-numeric: tabular-nums; }
+        input, select { color: #000; font-weight: 600; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+        .bill-container { background: white; padding: 30px; max-width: 600px; margin: 0 auto; font-family: Arial; }
+        .bill-header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 20px; }
+        .bill-title { font-size: 24px; font-weight: bold; }
+        .bill-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #ddd; font-size: 14px; }
+        .bill-row-bold { font-weight: bold; background: #f0f0f0; }
+    </style>
 </head>
 <body>
-  <app-root></app-root>
+  <div id="root">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <app-root></app-root>
+   </div>
+  </div>
 </body>
 </html>

@@ -1,0 +1,32 @@
+<div class="px-6 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between rounded-b-xl">
+  
+  <!-- Page Size Select -->
+  <div class="flex items-center gap-2 text-sm text-slate-500">
+    <span>Rows:</span>
+    <select [ngModel]="pageSize" (ngModelChange)="pageSizeChange.emit($event)" 
+            class="bg-white border border-slate-300 text-slate-700 text-sm rounded-md focus:ring-blue-500 focus:border-blue-500 block p-1">
+      <option *ngFor="let size of pageSizeOptions" [value]="size">{{ size }}</option>
+    </select>
+  </div>
+
+  <!-- Info Text -->
+  <span class="text-sm text-slate-500">
+    Showing <span class="font-bold text-slate-800">{{ (page - 1) * pageSize + 1 }}</span> - 
+    <span class="font-bold text-slate-800">{{ Math.min(page * pageSize, total) }}</span> of 
+    <span class="font-bold text-slate-800">{{ total }}</span>
+  </span>
+
+  <!-- Buttons -->
+  <div class="flex items-center gap-1">
+    <button (click)="pageChange.emit(page - 1)" 
+            [disabled]="page === 1" 
+            class="px-3 py-1 rounded-md border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-50 text-xs font-medium cursor-pointer disabled:cursor-not-allowed">
+      Prev
+    </button>
+    <button (click)="pageChange.emit(page + 1)" 
+            [disabled]="page * pageSize >= total" 
+            class="px-3 py-1 rounded-md border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-50 text-xs font-medium cursor-pointer disabled:cursor-not-allowed">
+      Next
+    </button>
+  </div>
+</div>

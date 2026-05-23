@@ -1,0 +1,49 @@
+<div *ngIf="page === 'PARTIES'" class="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col min-h-[600px] relative">
+      
+      <!-- HEADER -->
+      <app-parties-header 
+        [totalItems]="filteredParties.length"
+        [searchTerm]="searchTerm"
+        [balanceFilter]="balanceFilter"
+        (searchChange)="onSearchChange($event)"
+        (filterChange)="setBalanceFilter($event)"
+        (addParty)="openCreateModal()">
+      </app-parties-header>
+
+      <!-- TABLE -->
+      <app-party-table
+        [parties]="paginatedParties"
+        (viewDetails)="viewPartyDetails($event)"
+        (edit)="openEditModal($event)"
+        (delete)="initiateDelete($event)">
+      </app-party-table>
+
+      <!-- PAGINATION -->
+      <app-pagination-footer
+        [page]="currentPage"
+        [pageSize]="pageSize"
+        [total]="filteredParties.length"
+        (pageChange)="setPage($event)"
+        (pageSizeChange)="onPageSizeChange($event)">
+      </app-pagination-footer>
+
+      <!-- ADD/EDIT FORM MODAL -->
+      <app-party-form
+        [isOpen]="isModalOpen"
+        [isSaving]="isSaving"
+        [partyId]="currentPartyId"
+        [initialData]="editingPartyData"
+        (close)="closeModal()"
+        (save)="handleSaveParty($event)">
+      </app-party-form>
+
+      <!-- DELETE CONFIRMATION -->
+      <app-delete-confirmation
+        [isOpen]="isDeleteModalOpen"
+        [isDeleting]="isDeleting"
+        [itemName]="partyToDelete?.name"
+        (close)="closeDeleteModal()"
+        (confirm)="confirmDelete()">
+      </app-delete-confirmation>
+
+    </div>

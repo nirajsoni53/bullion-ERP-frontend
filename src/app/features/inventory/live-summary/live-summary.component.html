@@ -1,0 +1,55 @@
+<div class="bg-slate-50/50 border-b border-slate-200">
+    <div class="px-6 py-4">
+        <div class="flex items-stretch gap-6 text-sm">
+        
+        <!-- SALE -->
+        <div class="flex-1">
+            <div class="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Sale Metrics</div>
+            <div class="space-y-1">
+                <div class="flex justify-between"><span class="text-slate-500 text-xs">Gross</span><span class="font-mono font-bold text-slate-700">{{ formData.saleGrossWeight | number:'1.2-2' }}</span></div>
+                <div class="flex justify-between"><span class="text-slate-500 text-xs">Fine</span><span class="font-mono font-bold text-blue-600">{{ formData.saleFineWeight | number:'1.2-2' }}</span></div>
+                <div class="flex justify-between pt-1 border-t border-slate-200"><span class="text-slate-500 text-xs">Avg Rate</span><span class="font-mono font-bold text-slate-800">{{ fmtINR(formData.avgEffectiveRate) }}</span></div>
+            </div>
+        </div>
+        <div class="w-px bg-slate-200 my-1"></div>
+
+        <!-- BADLO -->
+        <div class="flex-1">
+            <div class="text-[10px] font-bold text-orange-400 uppercase mb-2 tracking-wider">Badlo Metrics</div>
+            <div class="space-y-1">
+                <div class="flex justify-between"><span class="text-slate-500 text-xs">Gross</span><span class="font-mono font-bold text-slate-700">{{ formData.badloGrossWeight | number:'1.2-2' }}</span></div>
+                <div class="flex justify-between"><span class="text-slate-500 text-xs">Fine</span><span class="font-mono font-bold text-orange-600">{{ formData.totalBadloFineWeight | number:'1.2-2' }}</span></div>
+            </div>
+        </div>
+        <div class="w-px bg-slate-200 my-1"></div>
+
+        <!-- TOTALS -->
+        <div class="flex-1">
+            <div class="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Total Inventory</div>
+            <div class="space-y-1">
+                <div class="flex justify-between"><span class="text-slate-500 text-xs">Total Gross</span><span class="font-mono font-black text-slate-800">{{ formData.totalGrossWeight | number:'1.2-2' }}</span></div>
+                <div class="flex justify-between"><span class="text-slate-500 text-xs">Total Fine</span><span class="font-mono font-black text-slate-800">{{ formData.totalFineWeight | number:'1.2-2' }}</span></div>
+            </div>
+        </div>
+
+        <!-- FINANCIALS -->
+        <div class="w-48 bg-white rounded-lg border border-slate-200 p-3 shadow-sm flex flex-col justify-between">
+            <div class="flex justify-between items-center mb-1">
+                <span class="text-[10px] font-bold text-green-600 uppercase">Profit</span>
+                <span class="text-xs font-black font-mono text-green-700">
+                    <span *ngIf="formData.totalProfit > 0">+{{ fmtINR(formData.totalProfit) }}</span>
+                    <span *ngIf="formData.totalProfit > 0 && formData.totalProfitMetal > 0">, </span>
+                    <span *ngIf="formData.totalProfitMetal > 0" class="text-orange-600">+{{ formData.totalProfitMetal | number:'1.2-2' }}g</span>
+                    <span *ngIf="formData.totalProfit <= 0 && formData.totalProfitMetal <= 0">0</span>
+                </span>
+            </div>
+            <div class="flex justify-between items-center pt-2 border-t border-slate-100">
+                <span class="text-[10px] font-bold text-slate-400 uppercase">Net Bill</span>
+                <span class="text-sm font-black font-mono" [ngClass]="formData.totalBillAmount >= 0 ? 'text-red-600' : 'text-green-600'">
+                    {{ formData.totalBillAmount >= 0 ? '(Pay)' : '(Rec)' }} {{ fmtINR(Math.abs(formData.totalBillAmount)) }}
+                </span>
+            </div>
+        </div>
+        </div>
+    </div>
+</div>

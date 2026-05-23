@@ -1,0 +1,79 @@
+<!-- PARTNERS PAGE -->
+<div *ngIf="page === 'PARTNERS'" class="bg-white rounded-xl shadow-sm border p-6 space-y-6">
+
+  <!-- Header + Add Partner -->
+  <div class="flex justify-between items-center">
+    <h2 class="text-2xl font-black">Partner Management (Banking Style)</h2>
+    <button (click)="openNewPartnerForm()" 
+            class="px-4 py-2 bg-blue-600 text-white font-bold rounded-lg">
+      + Add Partner
+    </button>
+  </div>
+
+  <!-- Partner Cards Grid -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div *ngFor="let p of partners" 
+         [ngClass]="{
+           'p-6 border-2 rounded-xl transition-all border-blue-300 bg-gradient-to-br from-blue-50 to-white': p.status === 'ACTIVE',
+           'p-6 border-2 rounded-xl transition-all border-gray-300 bg-gray-100 opacity-60': p.status !== 'ACTIVE'
+         }">
+
+      <!-- Header: Name + Status -->
+      <div class="flex justify-between items-start mb-4">
+        <div>
+          <div class="text-xl font-black">{{ p.name }}</div>
+          <div class="text-xs text-gray-500 font-bold">
+            Joined {{ p.joinDate }} ({{ getDaysSinceJoin(p.joinDate) }}d)
+          </div>
+        </div>
+
+        <div class="text-right">
+          <span [ngClass]="getTypeClass(p.type)" class="px-3 py-1 rounded-full text-[10px] font-bold mb-1 block">
+            {{ p.type }}
+          </span>
+          <span [ngClass]="getStatusClass(p.status)" class="px-2 py-1 rounded text-[10px] font-bold">
+            {{ p.status }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Investment Info -->
+      <div class="space-y-2 mb-4 pb-4 border-b grid grid-cols-2 gap-3">
+
+        <div>
+          <div class="text-xs text-gray-500 font-bold">Investment</div>
+          <div class="font-black mono text-blue-700">{{ fmtINR(getTotalInvested(p)) }}</div>
+        </div>
+
+        <div>
+          <div class="text-xs text-gray-500 font-bold">Share %</div>
+          <div class="font-black text-purple-700">{{ fmtNum(getSharePercent(p)) }}%</div>
+        </div>
+
+        <div *ngIf="p.type === 'PASSIVE'">
+          <div class="text-xs text-gray-500 font-bold">Deduction</div>
+          <div class="font-black text-red-600">{{ p.deductionPercent }}%</div>
+        </div>
+
+        <div>
+          <div class="text-xs text-gray-500 font-bold">Entries</div>
+          <div class="font-black text-gray-700">{{ getActiveInvestments(p).length }}</div>
+        </div>
+      </div>
+
+      <!-- Buttons -->
+      <div class="flex gap-2">
+        <button (click)="openPartnerDashboard(p.id)" class="flex-1 px-3 py-2 bg-indigo-600 text-white font-bold rounded text-xs hover:bg-indigo-700">
+          Dashboard
+        </button>
+        <button (click)="openPartnerReport(p.id)" class="flex-1 px-3 py-2 bg-green-600 text-white font-bold rounded text-xs hover:bg-green-700">
+          Profit
+        </button>
+        <button (click)="editPartner(p)" class="px-3 py-2 bg-gray-300 text-gray-700 font-bold rounded text-xs hover:bg-gray-400">
+          Edit
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>

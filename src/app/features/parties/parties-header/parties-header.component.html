@@ -1,0 +1,40 @@
+<div class="p-4 border-b border-slate-100 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-white rounded-t-xl z-20">
+    <div>
+        <h2 class="text-lg font-bold text-slate-800">Party Directory</h2>
+        <p class="text-xs text-slate-400">Total: {{ totalItems }} parties</p>
+    </div>
+    
+    <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+    <!-- Search -->
+    <div class="relative flex-1 min-w-[200px]">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg class="h-4 w-4 text-slate-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg>
+        </div>
+        <input 
+            [ngModel]="searchTerm" 
+            (ngModelChange)="onSearch($event)"
+            placeholder="Search Name, City, Mobile..."
+            class="pl-9 pr-4 py-2 w-full border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder-slate-400" />
+    </div>
+
+    <!-- Balance Filter -->
+    <div class="relative z-30">
+        <button (click)="toggleBalanceMenu()" class="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 hover:border-blue-300 transition-all">
+        <span [ngClass]="{'bg-slate-400': balanceFilter === 'ALL','bg-green-500': balanceFilter === 'RECEIVABLE','bg-red-500': balanceFilter === 'PAYABLE','bg-gray-300': balanceFilter === 'SETTLED'}" class="w-2 h-2 rounded-full"></span>
+        <span>{{ balanceFilter === 'ALL' ? 'All Accounts' : (balanceFilter === 'RECEIVABLE' ? 'To Receive' : (balanceFilter === 'PAYABLE' ? 'To Pay' : 'Settled')) }}</span>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 text-slate-400"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" /></svg>
+        </button>
+        <div *ngIf="isBalanceMenuOpen" class="absolute right-0 top-full mt-2 w-48 bg-white border border-slate-100 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+            <div class="p-1 space-y-0.5">
+            <button (click)="selectFilter('ALL')" class="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg hover:bg-slate-50" [class.bg-slate-50]="balanceFilter === 'ALL'"><span class="w-2 h-2 rounded-full bg-slate-400"></span> All Accounts</button>
+            <button (click)="selectFilter('RECEIVABLE')" class="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg hover:bg-green-50" [class.bg-green-50]="balanceFilter === 'RECEIVABLE'"><span class="w-2 h-2 rounded-full bg-green-500"></span> To Receive (Lena)</button>
+            <button (click)="selectFilter('PAYABLE')" class="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg hover:bg-red-50" [class.bg-red-50]="balanceFilter === 'PAYABLE'"><span class="w-2 h-2 rounded-full bg-red-500"></span> To Pay (Dena)</button>
+            <button (click)="selectFilter('SETTLED')" class="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-50" [class.bg-gray-50]="balanceFilter === 'SETTLED'"><span class="w-2 h-2 rounded-full bg-gray-300"></span> Settled</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Button -->
+    <button (click)="addParty.emit()" class="px-4 py-2 bg-blue-600 text-white font-bold text-sm rounded-lg shadow hover:bg-blue-700 hover:-translate-y-0.5 transition-all">+ New</button>
+    </div>
+</div>

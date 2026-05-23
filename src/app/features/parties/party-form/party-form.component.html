@@ -1,0 +1,49 @@
+<div *ngIf="isOpen" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" (click)="close.emit()"></div>
+    <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+    
+    <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+        <h3 class="text-lg font-bold text-slate-800">{{ partyId ? 'Edit Party' : 'Add New Party' }}</h3>
+        <button (click)="close.emit()" class="text-slate-400 hover:text-red-500 hover:bg-red-50 p-1 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
+    </div>
+
+    <div class="p-6 space-y-4">
+        <!-- Name -->
+        <div>
+        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Party Name <span class="text-red-500">*</span></label>
+        <input [(ngModel)]="formData.name" type="text" [class.border-red-500]="errors.name" (input)="errors.name = false" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+        <p *ngIf="errors.name" class="text-red-500 text-xs mt-1">Name is required</p>
+        </div>
+
+        <!-- Contact -->
+        <div>
+        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Mobile Number <span class="text-red-500">*</span></label>
+        <input [(ngModel)]="formData.contact" type="text" [class.border-red-500]="errors.contact" (input)="errors.contact = false" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm font-mono" />
+        <p *ngIf="errors.contact" class="text-red-500 text-xs mt-1">Valid 10-digit number required</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+        <!-- Shop -->
+        <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Shop Name <span class="text-red-500">*</span></label>
+            <input [(ngModel)]="formData.shopName" type="text" [class.border-red-500]="errors.shopName" (input)="errors.shopName = false" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+            <p *ngIf="errors.shopName" class="text-red-500 text-xs mt-1">Required</p>
+        </div>
+        <!-- City -->
+        <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">City <span class="text-red-500">*</span></label>
+            <input [(ngModel)]="formData.city" type="text" [class.border-red-500]="errors.city" (input)="errors.city = false" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+            <p *ngIf="errors.city" class="text-red-500 text-xs mt-1">Required</p>
+        </div>
+        </div>
+    </div>
+
+    <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+        <button (click)="close.emit()" class="px-4 py-2 text-slate-600 font-bold text-sm hover:bg-slate-200 rounded-lg transition-colors">Cancel</button>
+        <button (click)="submit()" [disabled]="isSaving" class="px-6 py-2 bg-blue-600 text-white font-bold text-sm rounded-lg shadow hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+        <span *ngIf="isSaving" class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+        {{ isSaving ? 'Saving...' : (partyId ? 'Update Party' : 'Save Party') }}
+        </button>
+    </div>
+    </div>
+</div>

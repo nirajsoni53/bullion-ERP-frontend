@@ -1,0 +1,189 @@
+<div *ngIf="page === 'REPORTS'" class="bg-white rounded-xl shadow-sm border p-6 space-y-6">
+
+  <h2 class="text-2xl font-black">Business Reports</h2>
+
+  <!-- FILTER BAR -->
+  <div class="grid grid-cols-1 md:grid-cols-5 gap-4 bg-gray-50 p-4 rounded-lg">
+    <select
+        [(ngModel)]="reportFilter.type"
+        (ngModelChange)="onReportTypeChange($event)"
+        class="p-2 border rounded-lg font-bold text-sm">
+      <option value="DAILY">Daily</option>
+      <option value="MONTHLY">Monthly</option>
+      <option value="YEARLY">Yearly</option>
+      <option value="CUSTOM">Custom</option>
+    </select>
+
+    <input *ngIf="reportFilter.type === 'CUSTOM'"
+      type="date"
+      [(ngModel)]="reportFilter.startDate"
+      class="p-2 border rounded-lg font-bold text-sm" />
+
+    <input *ngIf="reportFilter.type === 'CUSTOM'"
+      type="date"
+      [(ngModel)]="reportFilter.endDate"
+      class="p-2 border rounded-lg font-bold text-sm" />
+
+    <button
+      (click)="generateReport()"
+      class="p-2 bg-green-600 text-white font-bold rounded-lg text-sm">
+      Generate
+    </button>
+  </div>
+
+  <!-- SUMMARY -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div class="bg-green-50 border-2 border-green-300 p-6 rounded-lg">
+      <div class="text-sm font-bold uppercase text-green-600">Sales Profit</div>
+      <div class="text-3xl font-black text-green-700">{{ fmtINR(totalProfit) }}</div>
+    </div>
+
+    <div class="bg-red-50 border-2 border-red-300 p-6 rounded-lg">
+      <div class="text-sm font-bold uppercase text-red-600">Total Expenses</div>
+      <div class="text-3xl font-black text-red-700">{{ fmtINR(totalExp) }}</div>
+    </div>
+
+    <div class="bg-blue-50 border-2 border-blue-300 p-6 rounded-lg">
+      <div class="text-sm font-bold uppercase text-blue-600">Net Profit</div>
+      <div class="text-3xl font-black text-blue-700">{{ fmtINR(netProfit) }}</div>
+    </div>
+
+    <div class="bg-purple-50 border-2 border-purple-300 p-6 rounded-lg">
+      <div class="text-sm font-bold uppercase text-purple-600">Items Sold</div>
+      <div class="text-3xl font-black text-purple-700">{{ sold.length }}</div>
+    </div>
+  </div>
+
+  <!-- SALES TABLE -->
+    <div class="bg-blue-50 border p-4 rounded-lg overflow-x-auto">
+    <h3 class="font-black text-blue-900 mb-3">Sales Details</h3>
+
+    <table class="w-full text-sm">
+        <thead class="bg-blue-100">
+        <tr>
+            <th class="p-2 text-left">#ID</th>
+            <th class="p-2 text-left">Date</th>
+            <th class="p-2 text-left">Item</th>
+            <th class="p-2 text-right">Cost</th>
+            <th class="p-2 text-right">Sell Amt</th>
+            <th class="p-2 text-right">Profit</th>
+        </tr>
+        </thead>
+
+        <tbody *ngIf="sold.length > 0; else noSales">
+        <tr *ngFor="let i of sold" class="border-b">
+            <td class="p-2 font-bold text-blue-600">{{ i.id }}</td>
+            <td class="p-2">{{ i.sale?.date }}</td>
+            <td class="p-2">{{ i.itemName }}</td>
+            <td class="p-2 text-right">{{ fmtINR(i.cost) }}</td>
+            <td class="p-2 text-right">{{ fmtINR(i.sale?.sellAmount ?? 0) }}</td>
+            <td class="p-2 text-right font-bold text-green-600">
+            {{ fmtINR(i.sale?.profit ?? 0) }}
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <ng-template #noSales>
+        <tr>
+        <td colspan="6" class="p-4 text-center text-gray-400">
+            No sales in this period
+        </td>
+        </tr>
+    </ng-template>
+    </div>
+
+  <!-- EXPENSES TABLE -->
+    <div class="bg-red-50 border p-4 rounded-lg overflow-x-auto">
+    <h3 class="font-black text-red-900 mb-3">
+        Expenses ({{ exps.length }})
+    </h3>
+
+    <table class="w-full text-sm">
+        <thead class="bg-red-100">
+        <tr>
+            <th class="p-2 text-left">Date</th>
+            <th class="p-2 text-left">Title</th>
+            <th class="p-2 text-right">Amount</th>
+        </tr>
+        </thead>
+
+        <tbody *ngIf="exps.length > 0; else noExpenses">
+        <tr *ngFor="let e of exps" class="border-b">
+            <td class="p-2">{{ e.date }}</td>
+            <td class="p-2 font-bold">{{ e.title }}</td>
+            <td class="p-2 text-right text-red-600 font-bold">
+            {{ fmtINR(e.amount) }}
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <ng-template #noExpenses>
+        <tr>
+        <td colspan="3" class="p-4 text-center text-gray-400">
+            No expenses in this period
+        </td>
+        </tr>
+    </ng-template>
+    </div>
+
+  <!-- PARTNER DISTRIBUTION TABLE -->
+   <!-- *ngIf="partnerStats.length > 0" -->
+    <div
+    class="bg-purple-50 border p-4 rounded-lg overflow-x-auto"
+    >
+    <h3 class="font-black text-purple-900 mb-3">
+        Partner Profit Distribution
+    </h3>
+
+    <table class="w-full text-sm">
+        <thead class="bg-purple-100">
+        <tr>
+            <th class="p-2 text-left">Partner</th>
+            <th class="p-2 text-left">Type</th>
+            <th class="p-2 text-center">Initial %</th>
+            <th class="p-2 text-center">Deduction</th>
+            <th class="p-2 text-center">Final %</th>
+            <th class="p-2 text-right">Share</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr *ngFor="let p of partnerStats" class="border-b">
+            <td class="p-2 font-bold">{{ p.name }}</td>
+
+            <td class="p-2 text-xs">
+            <span
+                class="px-2 py-1 rounded"
+                [ngClass]="{
+                'bg-green-100 text-green-700': p.type === 'ACTIVE',
+                'bg-yellow-100 text-yellow-700': p.type === 'PASSIVE'
+                }"
+            >
+                {{ p.type }}
+            </span>
+            </td>
+
+            <td class="p-2 text-center font-bold">
+            {{ fmtNum(p.basePercent) }}%
+            </td>
+
+            <td class="p-2 text-center text-red-600 font-bold">
+            {{ p.type === 'PASSIVE' ? p.deductionPercent + '%' : '-' }}
+            </td>
+
+            <td class="p-2 text-center font-bold text-blue-600">
+            {{ fmtNum(p.deductedPercent) }}%
+            </td>
+
+            <td class="p-2 text-right font-black text-green-600">
+            {{ fmtINR(p.finalShare) }}
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    </div>
+  <!-- (unchanged visually, logic already wired) -->
+
+</div>

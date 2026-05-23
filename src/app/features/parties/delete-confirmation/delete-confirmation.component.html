@@ -1,0 +1,19 @@
+<div *ngIf="isOpen" class="fixed inset-0 z-[110] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-red-900/20 backdrop-blur-sm transition-opacity" (click)="close.emit()"></div>
+    <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200 border-2 border-red-50">
+    <div class="p-6 text-center">
+        <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+        </div>
+        <h3 class="text-lg font-bold text-slate-800 mb-2">{{ title }}</h3>
+        <p class="text-sm text-slate-500 mb-6">Are you sure you want to delete <strong class="text-slate-800">{{ itemName }}</strong>?<br>This action cannot be undone.</p>
+        <div class="flex gap-3 justify-center">
+        <button (click)="close.emit()" class="px-4 py-2 bg-white border border-slate-300 text-slate-700 font-bold text-sm rounded-lg hover:bg-slate-50 transition-colors">Cancel</button>
+        <button (click)="confirm.emit()" [disabled]="isDeleting" class="px-4 py-2 bg-red-600 text-white font-bold text-sm rounded-lg shadow-md hover:bg-red-700 hover:shadow-lg transition-all flex items-center gap-2">
+            <span *ngIf="isDeleting" class="animate-spin h-3 w-3 border-2 border-white border-t-transparent rounded-full"></span>
+            {{ isDeleting ? 'Deleting...' : 'Yes, Delete' }}
+        </button>
+        </div>
+    </div>
+    </div>
+</div>

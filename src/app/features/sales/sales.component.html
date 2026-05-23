@@ -1,0 +1,94 @@
+<div class="bg-white rounded-xl shadow-sm border p-4 space-y-4">
+
+  <!-- Search -->
+  <input
+    [(ngModel)]="searchText"
+    placeholder="Search #ID, Party..."
+    class="px-4 py-2 border rounded-lg text-sm w-full md:w-80"
+  />
+
+  <!-- Table -->
+  <div class="overflow-x-auto">
+    <table class="w-full text-xs">
+      <thead class="bg-gray-100 border-b">
+        <tr>
+          <th class="p-2 text-left">#ID</th>
+          <th class="p-2 text-left">Date</th>
+          <th class="p-2 text-left">Party</th>
+          <th class="p-2 text-right">Gross</th>
+          <th class="p-2 text-center">Purity%</th>
+          <th class="p-2 text-right">Fine</th>
+          <th class="p-2 text-right">Rate</th>
+          <th class="p-2 text-right">Cost</th>
+          <th class="p-2 text-right">Profit</th>
+          <th class="p-2 text-center">Settlement</th>
+          <th class="p-2 text-center">Actions</th>
+        </tr>
+      </thead>
+
+      <tbody *ngIf="filteredSales.length; else noData">
+        <tr *ngFor="let i of filteredSales" class="hover:bg-blue-50 border-b">
+
+          <td class="p-2 font-bold text-blue-600">{{ i.id }}</td>
+          <td class="p-2">{{ i.sale?.date }}</td>
+          <td class="p-2 font-bold">{{ getPartyName(i) }}</td>
+
+          <td class="p-2 text-right">{{ fmtNum(i.grossWeightG) }}</td>
+          <td class="p-2 text-center font-bold">
+            {{ fmtNum(i.actualPurity) }}/{{ fmtNum(i.paidPurity) }}
+          </td>
+          <td class="p-2 text-right font-bold">{{ fmtNum(i.fineG) }}</td>
+
+          <td class="p-2 text-right">
+            {{ fmtINR(i.sale?.sellRate) }}
+          </td>
+          <td class="p-2 text-right">
+            {{ fmtINR(i.cost) }}
+          </td>
+
+          <td class="p-2 text-right font-bold text-green-600">
+            {{ fmtINR(i.sale?.profit) }}
+          </td>
+
+          <td class="p-2 text-center">
+            <ng-container *ngIf="getSalePending(i) > 0; else settled">
+              <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-10px font-bold">
+                ₹{{ fmtNum(getSalePending(i)) }}
+              </span>
+            </ng-container>
+            <ng-template #settled>
+              <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-10px font-bold">
+                ✓ Settled
+              </span>
+            </ng-template>
+          </td>
+
+          <td class="p-2 text-center space-y-1">
+            <button
+              (click)="openItemDetails(i.id)"
+              class="text-blue-600 text-xs block"
+            >
+              📋
+            </button>
+
+            <button
+              *ngIf="getSalePending(i) > 0"
+              (click)="openSettlement(i.id)"
+              class="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded text-10px font-bold"
+            >
+              Settle
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <ng-template #noData>
+      <tr>
+        <td colspan="11" class="p-8 text-center text-gray-400">
+          No Sales Records
+        </td>
+      </tr>
+    </ng-template>
+  </div>
+</div>
