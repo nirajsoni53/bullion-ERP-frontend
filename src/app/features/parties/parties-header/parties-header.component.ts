@@ -13,6 +13,7 @@ export class PartiesHeaderComponent {
   @Output() searchChange = new EventEmitter<string>();
   @Output() filterChange = new EventEmitter<any>();
   @Output() addParty = new EventEmitter<void>();
+  @Output() openSettlement = new EventEmitter<void>();
 
   isBalanceMenuOpen = false;
 

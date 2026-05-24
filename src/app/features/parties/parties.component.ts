@@ -33,14 +33,33 @@ export class PartiesComponent implements OnInit {
   isDeleting = false;
   partyToDelete: Party | null = null;
 
+  // Add Settlement Modal State
+  isSettlementModalOpen = false;
+  settlementPartyId: number | null = null;
+
   constructor(private partyService: PartyService) {}
 
   ngOnInit() { this.loadParties(); }
 
+  openSettlementModal(partyId: number | null) {
+    console.log("Opening settlement for Party ID:", partyId);
+    this.settlementPartyId = partyId;
+    this.isSettlementModalOpen = true;
+  }
+
+  closeSettlementModal() {
+    this.isSettlementModalOpen = false;
+    this.settlementPartyId = null;
+  }
+
+  handleSettled() {
+    this.loadParties(); // Refresh table to get new balances
+  }
+
   loadParties() {
-    this.partyService.getParties().subscribe(data => {
+    this.partyService.getParties().subscribe((data: Party[]) => {
       this.allParties = data;
-      this.applyFilters();
+      this.filteredParties = data;
     });
   }
 
@@ -50,18 +69,32 @@ export class PartiesComponent implements OnInit {
 
   applyFilters() {
     let temp = this.allParties;
+    
     if (this.searchTerm) {
       const term = this.searchTerm.toLowerCase();
-      temp = temp.filter(p => p.name.toLowerCase().includes(term) || p.shopName.toLowerCase().includes(term) || p.city.toLowerCase().includes(term) || p.contact.includes(term));
+      temp = temp.filter(p => 
+        p.name.toLowerCase().includes(term) || 
+        p.shopName.toLowerCase().includes(term) || 
+        p.city.toLowerCase().includes(term) || 
+        p.contact.includes(term)
+      );
     }
+    
     if (this.balanceFilter !== 'ALL') {
       temp = temp.filter(p => {
-        if (this.balanceFilter === 'SETTLED') return p.stats.pendingAmount === 0;
-        if (this.balanceFilter === 'RECEIVABLE') return p.stats.pendingAmount > 0;
-        if (this.balanceFilter === 'PAYABLE') return p.stats.pendingAmount < 0;
+        // Evaluate all three balances
+        const isSettled = p.cashBalance === 0 && p.goldBalance === 0 && p.silverBalance === 0;
+        const hasReceivable = p.cashBalance > 0 || p.goldBalance > 0 || p.silverBalance > 0;
+        const hasPayable = p.cashBalance < 0 || p.goldBalance < 0 || p.silverBalance < 0;
+
+        if (this.balanceFilter === 'SETTLED') return isSettled;
+        if (this.balanceFilter === 'RECEIVABLE') return hasReceivable;
+        if (this.balanceFilter === 'PAYABLE') return hasPayable;
+        
         return true;
       });
     }
+    
     this.filteredParties = temp;
     this.currentPage = 1;
     this.updatePagination();
@@ -98,7 +131,7 @@ export class PartiesComponent implements OnInit {
   }
 
   // --- DELETE HANDLERS ---
-  initiateDelete(party: Party) { this.partyToDelete = party; this.isDeleteModalOpen = true; }
+  deleteParty(party: Party) { this.partyToDelete = party; this.isDeleteModalOpen = true; }
   closeDeleteModal() { this.isDeleteModalOpen = false; this.partyToDelete = null; }
   
   confirmDelete() {

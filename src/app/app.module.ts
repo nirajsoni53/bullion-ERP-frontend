@@ -26,6 +26,7 @@ import { LiveSummaryComponent } from './features/inventory/live-summary/live-sum
 import { ItemEntryComponent } from './features/inventory/item-entry/item-entry.component';
 import { BadloCalculatorComponent } from './features/inventory/badlo-calculator/badlo-calculator.component';
 import { SettlementPaymentComponent } from './features/inventory/settlement-payment/settlement-payment.component';
+import { SettlementModalComponent } from './features/parties/settlement-modal/settlement-modal.component';
 
 @NgModule({
   declarations: [
@@ -50,7 +51,8 @@ import { SettlementPaymentComponent } from './features/inventory/settlement-paym
     LiveSummaryComponent,
     ItemEntryComponent,
     BadloCalculatorComponent,
-    SettlementPaymentComponent
+    SettlementPaymentComponent,
+    SettlementModalComponent
   ],
   imports: [
     HttpClientModule,

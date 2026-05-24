@@ -27,7 +27,9 @@
                         </div>
                         <div class="text-[10px] text-slate-500">{{ p.city }} • <span class="font-mono text-slate-600">{{ p.contact }}</span></div>
                     </div>
-                    <div class="text-xs font-bold" [ngClass]="p.stats.pendingAmount < 0 ? 'text-green-600' : 'text-red-600'">{{ fmtINR(Math.abs(p.stats.pendingAmount)) }}</div>
+                    <div class="text-xs font-bold" [ngClass]="p.cashBalance < 0 ? 'text-green-600' : 'text-red-600'">
+                        {{ fmtINR(Math.abs(p.cashBalance)) }}
+                    </div>
                 </div>
                 </div>
             </div>
@@ -36,17 +38,15 @@
             
             <!-- SELECTED PARTY DETAILS -->
             <div *ngIf="selectedParty" class="mt-2 p-3 bg-slate-50 border border-slate-200 rounded-lg flex justify-between items-center animate-in fade-in slide-in-from-top-1">
-            <div class="text-xs text-slate-500 font-bold flex gap-2">
-                <span>📍 {{ selectedParty.city }}</span>
-                <span>📞 {{ selectedParty.contact }}</span>
-                <span *ngIf="selectedParty.shopName" class="text-slate-600">🏢 {{ selectedParty.shopName }}</span>
-            </div>
-            <div class="text-right">
-                <div class="text-[10px] font-bold text-slate-400 uppercase">Total Outstanding</div>
-                <div class="text-sm font-black font-mono" [ngClass]="selectedParty.stats.pendingAmount < 0 ? 'text-green-600' : 'text-red-600'">
-                    {{ selectedParty.stats.pendingAmount < 0 ? '(Receivable)' : '(Payable)' }} {{ fmtINR(Math.abs(selectedParty.stats.pendingAmount)) }}
+                <div class="text-xs text-slate-500 font-bold flex gap-2">
+                    <span>📍 {{ selectedParty.city }}</span>
+                    <span>📞 {{ selectedParty.contact }}</span>
+                    <span *ngIf="selectedParty.shopName" class="text-slate-600">🏢 {{ selectedParty.shopName }}</span>
                 </div>
-            </div>
+                <div class="font-mono" [ngClass]="selectedParty.cashBalance < 0 ? 'text-green-600' : 'text-red-600'">
+                    {{ selectedParty.cashBalance < 0 ? '(Receivable / Lena)' : '(Payable / Dena)' }} 
+                    {{ fmtINR(Math.abs(selectedParty.cashBalance)) }}
+                </div>
             </div>
         </div>
     </div>

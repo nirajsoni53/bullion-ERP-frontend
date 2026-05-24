@@ -1,0 +1,227 @@
+<div *ngIf="isOpen" class="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-xs bg-slate-950/40 p-3 font-sans animate-fade-in">
+  <div class="bg-white w-full max-w-[96vw] rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col h-[94vh]">
+    
+    <div class="px-6 py-3 bg-slate-900 text-white flex items-center justify-between shrink-0">
+      <div class="flex items-center gap-3">
+        <span class="bg-emerald-500 text-slate-950 text-[10px] font-black px-2 py-0.5 rounded-md tracking-wider">LIVE RECORES V2.4</span>
+        <h3 class="text-xs font-black tracking-wider uppercase text-slate-200">Double-Entry Banking Ledger Desk Terminal</h3>
+        <span *ngIf="selectedParty" class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-mono text-xs">
+          ID: #{{selectedParty.id}} | {{ selectedParty.name }}
+        </span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button *ngIf="selectedParty" (click)="downloadLedgerPDF()" type="button" class="px-3 py-1.5 bg-rose-700 hover:bg-rose-800 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer">
+          📥 Export Landscape Statement (PDF)
+        </button>
+        <button (click)="resetForm()" class="p-1 text-slate-400 hover:text-white rounded-md hover:bg-slate-800 transition-colors cursor-pointer">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="flex-1 overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-0">
+      
+      <div class="lg:col-span-8 p-4 flex flex-col min-h-0 overflow-hidden border-r border-slate-200">
+        
+        <div class="relative mb-3 shrink-0">
+          <label class="block text-[9px] font-black text-slate-400 uppercase tracking-wider mb-1">Customer Search Lookup Routing Node</label>
+          <div class="flex items-center bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 focus-within:ring-2 focus-within:ring-slate-900 shadow-inner">
+            <input type="text" [(ngModel)]="customerSearchTerm" (focus)="isDropdownOpen = true" placeholder="Type name, company shop firm, or phone digits to pull comprehensive statements..." class="w-full text-xs font-semibold outline-none bg-transparent text-slate-800" />
+          </div>
+
+          <div *ngIf="isDropdownOpen && filteredParties.length > 0" class="absolute z-50 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl max-h-40 overflow-y-auto divide-y divide-slate-100">
+            <div *ngFor="let party of filteredParties" (click)="selectParty(party)" class="p-2.5 hover:bg-slate-50 cursor-pointer transition-colors flex justify-between items-center text-xs">
+              <div><span class="font-bold text-slate-800 block">{{ party.name }}</span><span class="text-slate-400 font-medium">{{ party.shopName }} &middot; {{ party.city }}</span></div>
+              <span class="text-[9px] font-mono bg-slate-100 px-1.5 py-0.5 rounded text-slate-500 font-bold">Mount</span>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="!selectedParty" class="flex-1 flex flex-col items-center justify-center text-slate-400 border-2 border-dashed border-slate-200 rounded-2xl p-6 bg-slate-50/50">
+          <p class="text-xs font-bold tracking-tight">Active customer focus omitted. Mount an identity node above to initialize logs.</p>
+        </div>
+
+        <div *ngIf="selectedParty" class="flex-1 flex flex-col min-h-0 space-y-3">
+          
+          <div class="grid grid-cols-3 gap-3 shrink-0">
+            <div class="p-2.5 rounded-xl border border-slate-200 bg-slate-50 shadow-3xs">
+              <span class="text-[9px] font-bold text-slate-400 uppercase block">Current Cash Balance</span>
+              <span class="text-sm font-black font-mono block mt-0.5" [class.text-emerald-700]="selectedParty.cashBalance >= 0" [class.text-rose-700]="selectedParty.cashBalance < 0">{{ fmtINR(selectedParty.cashBalance) }}</span>
+            </div>
+            <div class="p-2.5 rounded-xl border border-amber-200 bg-amber-50/20 shadow-3xs">
+              <span class="text-[9px] font-bold text-amber-800 uppercase block">Current Gold Balance</span>
+              <span class="text-sm font-black font-mono text-amber-950 block mt-0.5">{{ fmtGold(selectedParty.goldBalance) }}</span>
+            </div>
+            <div class="p-2.5 rounded-xl border border-blue-200 bg-blue-50/20 shadow-3xs">
+              <span class="text-[9px] font-bold text-blue-800 uppercase block">Current Silver Balance</span>
+              <span class="text-sm font-black font-mono text-blue-950 block mt-0.5">{{ fmtSilver(selectedParty.silverBalance) }}</span>
+            </div>
+          </div>
+
+          <div class="flex-1 flex flex-col min-h-0 border border-slate-200 rounded-xl overflow-hidden bg-white shadow-xs">
+            
+            <div class="bg-slate-100 border-b border-slate-200 px-3 py-1.5 flex justify-between items-center shrink-0">
+              <span class="text-[10px] font-black text-slate-600 uppercase tracking-wider">Double-Entry Audit Log Statement Sheet</span>
+              <span class="text-[9px] font-bold font-mono text-slate-400">Precision Ledger Tracking Module</span>
+            </div>
+            
+            <div class="flex-1 overflow-auto">
+              <table class="w-full text-left border-collapse text-[11px]">
+                <thead class="bg-slate-50 text-slate-500 uppercase text-[9px] font-black tracking-wider border-b border-slate-200 sticky top-0 z-20">
+                  <tr class="bg-slate-100/80 border-b">
+                    <th colspan="3" class="p-1.5 text-center border-r text-slate-700 font-black">Voucher & Transaction Meta</th>
+                    <th colspan="2" class="p-1.5 text-center border-r text-emerald-800 bg-emerald-50/60">Cash Vault Track (INR)</th>
+                    <th colspan="2" class="p-1.5 text-center border-r text-amber-900 bg-amber-50/40">Gold Metal (g)</th>
+                    <th colspan="2" class="p-1.5 text-center text-blue-900 bg-blue-50/40">Silver Metal (g)</th>
+                  </tr>
+                  <tr>
+                    <th class="p-2 border-r whitespace-nowrap">Timestamp (Date/Time)</th>
+                    <th class="p-2 border-r">TxID</th>
+                    <th class="p-2 border-r max-w-[120px]">Memo Description</th>
+                    <th class="p-2 text-right text-rose-700 bg-rose-50/30 border-r">Debit (DR)</th>
+                    <th class="p-2 text-right text-emerald-700 bg-emerald-50/30 border-r">Credit (CR)</th>
+                    <th class="p-2 text-right bg-slate-50 border-r">DR (+)</th>
+                    <th class="p-2 text-right bg-slate-50 border-r">CR (-)</th>
+                    <th class="p-2 text-right bg-slate-50 border-r">DR (+)</th>
+                    <th class="p-2 text-right bg-slate-50">CR (-)</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-mono text-slate-600">
+                  <tr *ngFor="let tx of transactionHistory" class="hover:bg-slate-50/50 transition-colors align-middle">
+                    
+                    <td class="p-2 text-slate-400 font-sans whitespace-nowrap border-r leading-tight">
+                      <div class="font-bold text-slate-700">{{ tx.transactionDate | slice:0:10 }}</div>
+                      <div class="text-[9px] opacity-70">{{ tx.transactionDate | slice:11:19 }}</div>
+                    </td>
+                    
+                    <td class="p-2 border-r text-slate-400 font-sans">#{{ tx.id }}</td>
+                    <td class="p-2 border-r font-sans font-semibold text-slate-800 truncate max-w-[120px]" [title]="tx.description">{{ tx.description }}</td>
+                    
+                    <td class="p-2 text-right whitespace-nowrap border-r font-bold bg-rose-50/10 text-rose-600">
+                      {{ tx.cashDebit > 0 ? fmtINR(tx.cashDebit) : '—' }}
+                    </td>
+                    <td class="p-2 text-right whitespace-nowrap border-r font-bold bg-emerald-50/10 text-emerald-600">
+                      {{ tx.cashCredit > 0 ? fmtINR(tx.cashCredit) : '—' }}
+                    </td>
+
+                    <td class="p-2 text-right whitespace-nowrap border-r font-bold text-amber-800">
+                      {{ tx.goldDebit > 0 ? fmtGold(tx.goldDebit) : '—' }}
+                    </td>
+                    <td class="p-2 text-right whitespace-nowrap border-r font-bold text-rose-600">
+                      {{ tx.goldCredit > 0 ? fmtGold(tx.goldCredit) : '—' }}
+                    </td>
+
+                    <td class="p-2 text-right whitespace-nowrap border-r font-bold text-blue-800">
+                      {{ tx.silverDebit > 0 ? fmtSilver(tx.silverDebit) : '—' }}
+                    </td>
+                    <td class="p-2 text-right whitespace-nowrap font-bold text-rose-600">
+                      {{ tx.silverCredit > 0 ? fmtSilver(tx.silverCredit) : '—' }}
+                    </td>
+
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="lg:col-span-4 p-4 bg-slate-50 flex flex-col justify-between overflow-y-auto min-h-0">
+        
+        <div class="space-y-4" *ngIf="selectedParty">
+          
+          <div class="grid grid-cols-2 gap-1.5 p-1 bg-slate-200 rounded-xl shrink-0">
+            <button (click)="txMode = 'RECEIVE'" type="button" [class]="txMode === 'RECEIVE' ? 'bg-emerald-600 text-white font-bold shadow-xs' : 'text-slate-600 font-semibold hover:bg-slate-300/40'" class="py-1 text-xs rounded-lg transition-all cursor-pointer">⬇ Client Paying Us</button>
+            <button (click)="txMode = 'GIVE'" type="button" [class]="txMode === 'GIVE' ? 'bg-indigo-600 text-white font-bold shadow-xs' : 'text-slate-600 font-semibold hover:bg-slate-300/40'" class="py-1 text-xs rounded-lg transition-all cursor-pointer">⬆ Handing to Client</button>
+          </div>
+
+          <div class="space-y-2">
+            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider">1. Assets Brought to Counter</label>
+            
+            <div class="p-2.5 bg-white border border-slate-200 rounded-xl shadow-3xs flex items-center justify-between gap-3">
+              <span class="text-xs font-bold text-slate-700 whitespace-nowrap">💵 Net Cash Amount:</span>
+              <input type="number" [(ngModel)]="assetsBrought.cash" class="w-32 text-right px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg font-mono font-bold text-xs" placeholder="0" />
+            </div>
+
+            <div class="p-2.5 bg-amber-50/40 border border-amber-200/60 rounded-xl shadow-3xs space-y-1">
+              <span class="text-[11px] font-bold text-amber-900 block">🏆 Gold Weight Allocation Component</span>
+              <div class="grid grid-cols-2 gap-2">
+                <input type="number" [(ngModel)]="assetsBrought.goldGrams" class="px-2 py-1 text-xs bg-white border border-amber-200 rounded-lg font-mono font-bold" placeholder="Grams" />
+                <input type="number" [(ngModel)]="assetsBrought.goldRate" class="px-2 py-1 text-xs bg-white border border-amber-200 rounded-lg font-mono text-slate-500" placeholder="Rate" />
+              </div>
+            </div>
+
+            <div class="p-2.5 bg-blue-50/40 border border-blue-200/60 rounded-xl shadow-3xs space-y-1">
+              <span class="text-[11px] font-bold text-blue-900 block">🥈 Silver Weight Allocation Component</span>
+              <div class="grid grid-cols-2 gap-2">
+                <input type="number" [(ngModel)]="assetsBrought.silverGrams" class="px-2 py-1 text-xs bg-white border border-blue-200 rounded-lg font-mono font-bold" placeholder="Grams" />
+                <input type="number" [(ngModel)]="assetsBrought.silverRate" class="px-2 py-1 text-xs bg-white border border-blue-200 rounded-lg font-mono text-slate-500" placeholder="Rate" />
+              </div>
+            </div>
+          </div>
+
+          <div class="p-3 bg-white border border-slate-300 rounded-xl space-y-2.5 shadow-3xs">
+            <label class="block text-[10px] font-black text-slate-500 uppercase tracking-wider">2. Account Payoff Allocation Strategy</label>
+            
+            <div class="flex gap-2 p-0.5 bg-slate-100 rounded-lg border">
+              <button type="button" (click)="settlementStrategy = 'SPECIFIC'" [class]="settlementStrategy === 'SPECIFIC' ? 'bg-slate-900 text-white font-bold' : 'text-slate-600 hover:bg-slate-200'" class="flex-1 py-1 text-[11px] rounded-md transition-all cursor-pointer">Isolated Target</button>
+              <button type="button" (click)="settlementStrategy = 'CASCADE'" [class]="settlementStrategy === 'CASCADE' ? 'bg-slate-900 text-white font-bold' : 'text-slate-600 hover:bg-slate-200'" class="flex-1 py-1 text-[11px] rounded-md transition-all cursor-pointer">Smart Priority</button>
+            </div>
+
+            <div class="p-2 bg-white border border-slate-200 rounded-xl shadow-2xs">
+              <label class="block text-[10px] font-bold text-slate-600 mb-1">Transaction Description Note / Memo</label>
+              <input type="text" [(ngModel)]="descriptionNote" class="w-full px-2 py-1 text-xs bg-slate-50 border border-slate-200 rounded-md font-medium text-slate-800 focus:outline-none" />
+            </div>
+
+            <div *ngIf="settlementStrategy === 'SPECIFIC'" class="space-y-1 animate-fade-in">
+              <span class="text-[10px] text-slate-400 font-bold block">Apply all value strictly to pay off:</span>
+              <select [(ngModel)]="specificTarget" class="w-full text-xs font-bold p-1.5 bg-slate-50 border border-slate-200 rounded-lg outline-none text-slate-700">
+                <option value="CASH">Cash Book Ledger Line Only</option>
+                <option value="GOLD">Gold Weight Balance Asset Only</option>
+                <option value="SILVER">Silver Weight Balance Asset Only</option>
+              </select>
+            </div>
+
+            <div *ngIf="settlementStrategy === 'CASCADE'" class="space-y-2 animate-fade-in">
+              <span class="text-[10px] text-slate-400 font-bold block leading-tight">Liquidation Priority Queue:</span>
+              <div class="space-y-1">
+                <div *ngFor="let item of cascadePriority; let i = index" class="flex items-center justify-between p-1.5 bg-slate-50 border rounded-lg text-xs font-mono font-bold">
+                  <span>Rank {{ i + 1 }}: <span class="text-slate-900 font-sans tracking-wide ml-2">{{ item }}</span></span>
+                  <div class="flex gap-1">
+                    <button type="button" *ngIf="i > 0" (click)="setPriority(i-1, item)" class="px-1 text-[10px] bg-white border rounded hover:bg-slate-200">▲</button>
+                    <button type="button" *ngIf="i < 2" (click)="setPriority(i+1, item)" class="px-1 text-[10px] bg-white border rounded hover:bg-slate-200">▼</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-slate-900 text-white rounded-xl p-3 font-mono space-y-1.5">
+            <div class="flex justify-between text-[9px] text-slate-400 font-sans font-bold uppercase tracking-wider">
+              <span>Dynamic Voucher Forecasts</span>
+              <span class="text-amber-400 font-bold">Mix Value: {{ fmtINR(totalBroughtValue) }}</span>
+            </div>
+            
+            <div class="border-t border-slate-800 pt-1.5 space-y-1 text-xs text-slate-300 font-sans">
+              <div class="flex justify-between font-mono"><span>Expected Cash Bal:</span><span class="font-extrabold" [class.text-emerald-400]="forecastedBalances.cash >= 0" [class.text-rose-400]="forecastedBalances.cash < 0">{{ fmtINR(forecastedBalances.cash) }}</span></div>
+              <div class="flex justify-between font-mono"><span>Expected Gold Bal:</span><span class="font-extrabold text-amber-400">{{ fmtGold(forecastedBalances.gold) }}</span></div>
+              <div class="flex justify-between font-mono"><span>Expected Silver Bal:</span><span class="font-extrabold text-blue-400">{{ fmtSilver(forecastedBalances.silver) }}</span></div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="flex items-center gap-2 mt-4 shrink-0">
+          <button (click)="resetForm()" type="button" class="flex-1 py-2 border border-slate-300 text-slate-700 bg-white hover:bg-slate-100 rounded-xl text-xs font-bold transition-all cursor-pointer">Cancel</button>
+          <button (click)="submitTransaction()" [disabled]="!selectedParty || totalBroughtValue <= 0" [class]="selectedParty && totalBroughtValue > 0 ? (txMode === 'RECEIVE' ? 'bg-emerald-600 hover:bg-emerald-700 text-white font-black' : 'bg-indigo-600 hover:bg-indigo-700 text-white font-black') : 'bg-slate-200 text-slate-400 cursor-not-allowed'" class="flex-1 py-2 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer">
+            Commit Dynamic Settlement
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+</div>

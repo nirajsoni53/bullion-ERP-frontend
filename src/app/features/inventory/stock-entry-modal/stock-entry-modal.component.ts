@@ -61,8 +61,12 @@ export class StockEntryModalComponent implements OnInit, OnChanges {
     this.formData.partyId = p.id; 
     this.formData.partyName = p.name; 
     this.isPartySearchOpen = false; 
-    this.partyService.getUnsettledHistory(p.id).subscribe(h => {
-        this.unsettledHistory = h.map(x => ({...x, isSelected: false, settleAmount: 0}));
+    this.partyService.getUnsettledHistory(p.id).subscribe((h: UnsettledTransaction[]) => {
+      this.unsettledHistory = h.map((x: UnsettledTransaction) => ({
+        ...x, 
+        isSelected: false, 
+        settleAmount: 0
+      }));
     }); 
   }
   

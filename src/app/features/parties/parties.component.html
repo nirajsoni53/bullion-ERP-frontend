@@ -1,22 +1,27 @@
 <div *ngIf="page === 'PARTIES'" class="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col min-h-[600px] relative">
       
       <!-- HEADER -->
+
       <app-parties-header 
         [totalItems]="filteredParties.length"
         [searchTerm]="searchTerm"
         [balanceFilter]="balanceFilter"
-        (searchChange)="onSearchChange($event)"
-        (filterChange)="setBalanceFilter($event)"
-        (addParty)="openCreateModal()">
+        (searchChange)="searchTerm = $event; applyFilters()"
+        (filterChange)="balanceFilter = $event; applyFilters()"
+        (addParty)="openCreateModal()"
+        (openSettlement)="openSettlementModal(null)"> 
       </app-parties-header>
 
       <!-- TABLE -->
-      <app-party-table
-        [parties]="paginatedParties"
-        (viewDetails)="viewPartyDetails($event)"
-        (edit)="openEditModal($event)"
-        (delete)="initiateDelete($event)">
-      </app-party-table>
+      <div class="mt-4">
+        <app-party-table
+          [parties]="filteredParties"
+          (viewDetails)="viewPartyDetails($event)"
+          (edit)="openEditModal($event)"
+          (delete)="deleteParty($event)"
+          (settle)="openSettlementModal($event)">
+        </app-party-table>
+      </div>
 
       <!-- PAGINATION -->
       <app-pagination-footer
@@ -46,4 +51,14 @@
         (confirm)="confirmDelete()">
       </app-delete-confirmation>
 
+      <!-- Just above the closing </div> of Parties component -->
+
+      <!-- SETTLEMENT MODAL -->
+      <app-settlement-modal
+        [isOpen]="isSettlementModalOpen"
+        [parties]="allParties"
+        [preSelectedPartyId]="settlementPartyId"
+        (close)="closeSettlementModal()"
+        (settled)="handleSettled()">
+      </app-settlement-modal>
     </div>
