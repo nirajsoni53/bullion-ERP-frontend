@@ -84,8 +84,8 @@ export class PartiesComponent implements OnInit {
       temp = temp.filter(p => {
         // Evaluate all three balances
         const isSettled = p.cashBalance === 0 && p.goldBalance === 0 && p.silverBalance === 0;
-        const hasReceivable = p.cashBalance > 0 || p.goldBalance > 0 || p.silverBalance > 0;
-        const hasPayable = p.cashBalance < 0 || p.goldBalance < 0 || p.silverBalance < 0;
+        const hasPayable = p.cashBalance > 0 || p.goldBalance > 0 || p.silverBalance > 0;
+        const hasReceivable = p.cashBalance < 0 || p.goldBalance < 0 || p.silverBalance < 0;
 
         if (this.balanceFilter === 'SETTLED') return isSettled;
         if (this.balanceFilter === 'RECEIVABLE') return hasReceivable;

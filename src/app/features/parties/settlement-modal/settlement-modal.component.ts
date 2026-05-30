@@ -1,5 +1,12 @@
 import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
-import { Party, PartyService, LedgerTransaction, TransactionRequest } from '../../parties/party.service';
+import { Party, PartyService, LedgerTransaction } from '../../parties/party.service';
+import { LedgerPrintService } from './ledger-print.service';
+
+interface ReceiptLine {
+  message: string;
+  valueStr: string;
+  isCleared: boolean;
+}
 
 @Component({
   selector: 'app-settlement-modal',
@@ -18,46 +25,62 @@ export class SettlementModalComponent implements OnChanges {
   isDropdownOpen: boolean = false;
   
   txMode: 'RECEIVE' | 'GIVE' = 'RECEIVE';
-  settlementStrategy: 'SPECIFIC' | 'CASCADE' = 'SPECIFIC';
+  
+  settlementStrategy: 'CASCADE' | 'SPECIFIC' | 'AS_IS' = 'CASCADE';
   specificTarget: 'CASH' | 'GOLD' | 'SILVER' = 'CASH';
   cascadePriority: ('CASH' | 'GOLD' | 'SILVER')[] = ['CASH', 'GOLD', 'SILVER'];
 
-  transactionHistory: LedgerTransaction[] = [];
-  descriptionNote: string = 'Counter Asset Settlement';
+  activeAssets = { cash: true, gold: true, silver: true };
+  
+  // 🌟 REFACTORED: Structural clean data nodes object array for UI receipt lines mapping
+  calculationAuditTrail: ReceiptLine[] = [];
 
-  assetsBrought = {
-    cash: 0,
-    goldGrams: 0,
-    goldRate: 7200,
-    silverGrams: 0,
-    silverRate: 88
+  // 🌟 HEADER INTEGRATION VALUE SYSTEM VARIABLES
+  globalRates = {
+    gold: 72000,   // Per 10 Grams base unit benchmark
+    silver: 88000  // Per 1 Kilogram base unit benchmark
   };
 
-  constructor(private partyService: PartyService) {}
+  sandbox = { inputValue: '', mode: 'CASH_TO_METALS', outputResult: '0.00 Metric' };
+
+  transactionHistory: LedgerTransaction[] = [];
+  filterFromDate: string = '';
+  filterToDate: string = '';
+  currentPage: number = 0;
+  pageSize: number = 10;
+  totalPages: number = 0;
+  totalElements: number = 0;
+  descriptionNote: string = 'Counter Settlement Dispatch';
+
+  assetsBrought = {
+    cash: null as any,
+    goldGrams: null as any,
+    silverGrams: null as any
+  };
+
+  constructor(
+    private partyService: PartyService,
+    private printService: LedgerPrintService
+  ) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['isOpen'] && this.isOpen) {
-      if (this.preSelectedPartyId) {
-        this.selectPartyById(this.preSelectedPartyId);
-      } else {
-        this.resetInternalState();
-      }
+      if (this.preSelectedPartyId) this.selectPartyById(this.preSelectedPartyId);
+      else this.resetInternalState();
     }
   }
 
   get filteredParties(): Party[] {
     if (!this.customerSearchTerm) return this.parties;
-    return this.parties.filter(p => 
-      p.name.toLowerCase().includes(this.customerSearchTerm.toLowerCase()) ||
-      (p.shopName && p.shopName.toLowerCase().includes(this.customerSearchTerm.toLowerCase()))
-    );
+    return this.parties.filter(p => p.name.toLowerCase().includes(this.customerSearchTerm.toLowerCase()));
   }
 
   selectParty(party: Party): void {
     this.selectedParty = party;
     this.customerSearchTerm = party.name;
     this.isDropdownOpen = false;
-    this.loadHistory(party.id);
+    this.currentPage = 0;
+    this.loadHistory();
   }
 
   selectPartyById(id: number): void {
@@ -65,18 +88,100 @@ export class SettlementModalComponent implements OnChanges {
     if (found) this.selectParty(found);
   }
 
-  loadHistory(partyId: number): void {
-    this.partyService.getPartyTransactions(partyId).subscribe({
-      next: (data) => this.transactionHistory = data || [],
-      error: (err) => console.error("Error reading ledger lines:", err)
+  loadHistory(): void {
+    if (!this.selectedParty) return;
+    this.partyService.getPartyTransactionsPaged(
+      this.selectedParty.id, this.filterFromDate, this.filterToDate, this.currentPage, this.pageSize
+    ).subscribe({
+      next: (pageData: any) => {
+        this.transactionHistory = pageData.content || [];
+        this.totalPages = pageData.totalPages || 0;
+        this.totalElements = pageData.totalElements || 0;
+      },
+      error: (err: any) => console.error("Error logging paginated data lines:", err)
     });
   }
 
-  get currentGoldCashValue(): number { return (this.assetsBrought.goldGrams || 0) * (this.assetsBrought.goldRate || 0); }
-  get currentSilverCashValue(): number { return (this.assetsBrought.silverGrams || 0) * (this.assetsBrought.silverRate || 0); }
-  get totalBroughtValue(): number { return (this.assetsBrought.cash || 0) + this.currentGoldCashValue + this.currentSilverCashValue; }
+  onFilterChange(): void { this.currentPage = 0; this.loadHistory(); }
+  goToPage(page: number): void { if (page >= 0 && page < this.totalPages) { this.currentPage = page; this.loadHistory(); } }
 
-  // FIXED ACCOUNTING FORECAST MATRIX
+  validateActiveAssetCount(): void {
+    const activeCount = Object.values(this.activeAssets).filter(Boolean).length;
+    if (activeCount === 0) {
+      alert("At least one tracking line must remain checked.");
+      this.activeAssets.cash = true;
+    }
+  }
+
+  setStrategyMode(mode: 'CASCADE' | 'AS_IS' | 'SPECIFIC_CASH' | 'SPECIFIC_GOLD' | 'SPECIFIC_SILVER'): void {
+    if (mode === 'CASCADE') {
+      this.settlementStrategy = 'CASCADE';
+    } else if (mode === 'AS_IS') {
+      this.settlementStrategy = 'AS_IS';
+    } else {
+      this.settlementStrategy = 'SPECIFIC';
+      if (mode === 'SPECIFIC_CASH') this.specificTarget = 'CASH';
+      if (mode === 'SPECIFIC_GOLD') this.specificTarget = 'GOLD';
+      if (mode === 'SPECIFIC_SILVER') this.specificTarget = 'SILVER';
+    }
+  }
+
+  get displayPriorityQueue(): ('CASH' | 'GOLD' | 'SILVER')[] {
+    return this.cascadePriority.filter(item => {
+      if (item === 'CASH') return this.activeAssets.cash;
+      if (item === 'GOLD') return this.activeAssets.gold;
+      if (item === 'SILVER') return this.activeAssets.silver;
+      return false;
+    });
+  }
+
+  printStatementPDF(): void {
+    if (!this.selectedParty) return;
+    
+    // Executes using your exact printService signature
+    this.printService.printLandscapeLedger(
+      this.selectedParty, 
+      this.transactionHistory
+    );
+  }
+
+  shiftPriorityOrder(currentIndex: number, direction: number): void {
+    const visibleQueue = this.displayPriorityQueue;
+    const targetIndex = currentIndex + direction;
+    if (targetIndex < 0 || targetIndex >= visibleQueue.length) return;
+
+    const itemA = visibleQueue[currentIndex];
+    const itemB = visibleQueue[targetIndex];
+
+    const idxA = this.cascadePriority.indexOf(itemA);
+    const idxB = this.cascadePriority.indexOf(itemB);
+
+    this.cascadePriority[idxA] = itemB;
+    this.cascadePriority[idxB] = itemA;
+  }
+
+  // Gram valuation metrics reading directly from the active live fields inside the header model
+  get currentGoldCashValue(): number { 
+    if (!this.activeAssets.gold) return 0;
+    const ratePerGram = (Number(this.globalRates.gold) || 0) / 10;
+    return (Number(this.assetsBrought.goldGrams) || 0) * ratePerGram; 
+  }
+  get currentSilverCashValue(): number { 
+    if (!this.activeAssets.silver) return 0;
+    const ratePerGram = (Number(this.globalRates.silver) || 0) / 1000;
+    return (Number(this.assetsBrought.silverGrams) || 0) * ratePerGram; 
+  }
+  get totalBroughtValue(): number { 
+    const cashIn = this.activeAssets.cash ? (Number(this.assetsBrought.cash) || 0) : 0;
+    if (this.txMode === 'GIVE') {
+      const goldIn = this.activeAssets.gold ? (Number(this.assetsBrought.goldGrams) || 0) : 0;
+      const silverIn = this.activeAssets.silver ? (Number(this.assetsBrought.silverGrams) || 0) : 0;
+      return cashIn + goldIn + silverIn;
+    }
+    return cashIn + this.currentGoldCashValue + this.currentSilverCashValue; 
+  }
+
+  // COMPACT LOGICAL FORECAST BALANCES ENGINE PIPELINE MATRIX
   get forecastedBalances() {
     const state = {
       cash: this.selectedParty?.cashBalance || 0,
@@ -84,241 +189,180 @@ export class SettlementModalComponent implements OnChanges {
       silver: this.selectedParty?.silverBalance || 0
     };
 
-    if (!this.selectedParty || this.totalBroughtValue <= 0) return state;
+    this.calculationAuditTrail = [];
+    if (!this.selectedParty) return state;
 
-    // RECEIVE = Customer pays us -> Reduces their debt balance closer to 0
-    // GIVE = We advance cash/metal to them -> Increases their debt load
-    const balanceDirection = this.txMode === 'RECEIVE' ? 1 : -1;
+    const inputCash = this.activeAssets.cash ? (Number(this.assetsBrought.cash) || 0) : 0;
+    const inputGoldGrams = this.activeAssets.gold ? (Number(this.assetsBrought.goldGrams) || 0) : 0;
+    const inputSilverGrams = this.activeAssets.silver ? (Number(this.assetsBrought.silverGrams) || 0) : 0;
+
+    const goldGramRate = (Number(this.globalRates.gold) || 0) / 10;
+    const silverGramRate = (Number(this.globalRates.silver) || 0) / 1000;
+
+    if (this.txMode === 'GIVE') {
+      state.cash -= inputCash; state.gold -= inputGoldGrams; state.silver -= inputSilverGrams;
+      return state;
+    }
+
+    if (this.settlementStrategy === 'AS_IS') {
+      state.cash += inputCash; state.gold += inputGoldGrams; state.silver += inputSilverGrams;
+      return state;
+    }
 
     if (this.settlementStrategy === 'SPECIFIC') {
-      if (this.specificTarget === 'CASH') {
-        state.cash += this.totalBroughtValue * balanceDirection;
-      } else if (this.specificTarget === 'GOLD') {
-        const goldWeightEquivalent = this.totalBroughtValue / this.assetsBrought.goldRate;
-        state.gold += goldWeightEquivalent * balanceDirection;
-      } else if (this.specificTarget === 'SILVER') {
-        const silverWeightEquivalent = this.totalBroughtValue / this.assetsBrought.silverRate;
-        state.silver += silverWeightEquivalent * balanceDirection;
+      const poolValue = inputCash + (inputGoldGrams * goldGramRate) + (inputSilverGrams * silverGramRate);
+      if (this.specificTarget === 'CASH') state.cash += poolValue;
+      else if (this.specificTarget === 'GOLD') state.gold += (poolValue / goldGramRate);
+      else if (this.specificTarget === 'SILVER') state.silver += (poolValue / silverGramRate);
+      return state;
+    }
+
+    // PROCESS THE SEQUENTIAL SMART LIQUIDATION PROFILE MATRIX
+    let availableValueWallet = inputCash + (inputGoldGrams * goldGramRate) + (inputSilverGrams * silverGramRate);
+    const activeOrderQueue = this.displayPriorityQueue;
+
+    for (const targetNode of activeOrderQueue) {
+      if (availableValueWallet <= 0) break;
+
+      if (targetNode === 'CASH' && state.cash < 0) {
+        const liability = Math.abs(state.cash);
+        const chunk = Math.min(availableValueWallet, liability);
+        state.cash += chunk;
+        availableValueWallet -= chunk;
+        
+        this.calculationAuditTrail.push({
+          message: `Cleared Cash Account Liability`,
+          valueStr: `-₹${chunk.toFixed(0)}`,
+          isCleared: true
+        });
       }
-    } else {
-      // CASCADE SYSTEM FOR NATURAL RECOVERY
-      let structuralPool = this.totalBroughtValue;
+      else if (targetNode === 'GOLD' && state.gold < 0) {
+        const liabilityInCash = Math.abs(state.gold) * goldGramRate;
+        const chunkCash = Math.min(availableValueWallet, liabilityInCash);
+        const resolvedGrams = chunkCash / goldGramRate;
+        state.gold += resolvedGrams;
+        availableValueWallet -= chunkCash;
 
-      for (const target of this.cascadePriority) {
-        if (structuralPool <= 0) break;
-
-        if (target === 'CASH' && state.cash < 0) {
-          const gap = Math.abs(state.cash);
-          const chunk = Math.min(structuralPool, gap);
-          state.cash += chunk;
-          structuralPool -= chunk;
-        } 
-        else if (target === 'GOLD' && state.gold < 0) {
-          const gapCashVal = Math.abs(state.gold) * this.assetsBrought.goldRate;
-          const chunkCash = Math.min(structuralPool, gapCashVal);
-          state.gold += (chunkCash / this.assetsBrought.goldRate);
-          structuralPool -= chunkCash;
-        } 
-        else if (target === 'SILVER' && state.silver < 0) {
-          const gapCashVal = Math.abs(state.silver) * this.assetsBrought.silverRate;
-          const chunkCash = Math.min(structuralPool, gapCashVal);
-          state.silver += (chunkCash / this.assetsBrought.silverRate);
-          structuralPool -= chunkCash;
-        }
+        this.calculationAuditTrail.push({
+          message: `Cleared Gold Account Liability`,
+          valueStr: `-${resolvedGrams.toFixed(3)} g`,
+          isCleared: true
+        });
       }
+      else if (targetNode === 'SILVER' && state.silver < 0) {
+        const liabilityInCash = Math.abs(state.silver) * silverGramRate;
+        const chunkCash = Math.min(availableValueWallet, liabilityInCash);
+        const resolvedGrams = chunkCash / silverGramRate;
+        state.silver += resolvedGrams;
+        availableValueWallet -= chunkCash;
 
-      // If funds remain after leveling debts out, deposit remainder into cash balance
-      if (structuralPool > 0) {
-        state.cash += structuralPool * balanceDirection;
+        this.calculationAuditTrail.push({
+          message: `Cleared Silver Account Liability`,
+          valueStr: `-${resolvedGrams.toFixed(0)} g`,
+          isCleared: true
+        });
       }
     }
+
+    // DEPOSIT SURPLUS OVERPAYMENTS DIRECTLY BACK TO SOURCE TRACKS
+    if (availableValueWallet > 0) {
+      const originalTotalValueBrought = inputCash + (inputGoldGrams * goldGramRate) + (inputSilverGrams * silverGramRate);
+      if (originalTotalValueBrought > 0) {
+        const surplusRatio = availableValueWallet / originalTotalValueBrought;
+
+        if (inputCash > 0) {
+          const cashSurplusValue = inputCash * surplusRatio;
+          state.cash += cashSurplusValue;
+          this.calculationAuditTrail.push({
+            message: `Deposited Surplus Overpayment to Cash`,
+            valueStr: `+₹${cashSurplusValue.toFixed(0)}`,
+            isCleared: false
+          });
+        }
+        if (inputGoldGrams > 0) {
+          const goldSurplusGrams = inputGoldGrams * surplusRatio;
+          state.gold += goldSurplusGrams;
+          this.calculationAuditTrail.push({
+            message: `Deposited Surplus Overpayment to Gold`,
+            valueStr: `+${goldSurplusGrams.toFixed(3)} g`,
+            isCleared: false
+          });
+        }
+        if (inputSilverGrams > 0) {
+          const silverSurplusGrams = inputSilverGrams * surplusRatio;
+          state.silver += silverSurplusGrams;
+          this.calculationAuditTrail.push({
+            message: `Deposited Surplus Overpayment to Silver`,
+            valueStr: `+${silverSurplusGrams.toFixed(0)} g`,
+            isCleared: false
+          });
+        }
+      }
+    }
+
     return state;
   }
 
-  setPriority(index: number, type: 'CASH' | 'GOLD' | 'SILVER') {
-    const oldIndex = this.cascadePriority.indexOf(type);
-    this.cascadePriority[oldIndex] = this.cascadePriority[index];
-    this.cascadePriority[index] = type;
+  // 🌟 REFACTORED TRANSLATOR: RE-ROUTED DIRECTLY INTO GLOBAL LIVE RATES FROM HEADER
+  runSandboxConversion(): void {
+    const value = parseFloat(this.sandbox.inputValue);
+    if (isNaN(value) || value <= 0) {
+      this.sandbox.outputResult = '0.00';
+      return;
+    }
+    const goldGramRate = (Number(this.globalRates.gold) || 72000) / 10;
+    const silverGramRate = (Number(this.globalRates.silver) || 88000) / 1000;
+
+    if (this.sandbox.mode === 'CASH_TO_METALS') {
+      const targetGold = value / goldGramRate;
+      const targetSilver = value / silverGramRate;
+      this.sandbox.outputResult = `${targetGold.toFixed(3)}g Gold / ${Math.round(targetSilver)}g Silver`;
+    } 
+    else if (this.sandbox.mode === 'GOLD_TO_CASH') {
+      const computedInrValue = value * goldGramRate;
+      this.sandbox.outputResult = this.fmtINR(computedInrValue);
+    } 
+    else if (this.sandbox.mode === 'SILVER_TO_CASH') {
+      const computedInrValue = value * silverGramRate;
+      this.sandbox.outputResult = this.fmtINR(computedInrValue);
+    }
   }
 
   submitTransaction(): void {
     if (!this.selectedParty || this.totalBroughtValue <= 0) return;
-
     const finals = this.forecastedBalances;
     const current = this.selectedParty;
 
-    // CORRECTED BACKEND PAYLOAD MAPPING
-    // If final balance is GREATER than current balance (e.g., going from -10000 to -5000), it's a CREDIT.
-    // If final balance is LESS than current balance (e.g., going from -10000 to -15000), it's a DEBIT.
-    const payload: TransactionRequest = {
-      description: `${this.descriptionNote} [Strategy: ${this.settlementStrategy}]`,
-      cashCredit: finals.cash > current.cashBalance ? (finals.cash - current.cashBalance) : 0,
-      cashDebit: finals.cash < current.cashBalance ? (current.cashBalance - finals.cash) : 0,
-      
-      goldCredit: finals.gold > current.goldBalance ? (finals.gold - current.goldBalance) : 0,
-      goldDebit: finals.gold < current.goldBalance ? (current.goldBalance - finals.gold) : 0,
-      
-      silverCredit: finals.silver > current.silverBalance ? (finals.silver - current.silverBalance) : 0,
-      silverDebit: finals.silver < current.silverBalance ? (current.silverBalance - finals.silver) : 0
+    let payload: any = {
+      actionType: this.txMode,
+      description: `${this.descriptionNote} [Strategy: ${this.settlementStrategy}]`
     };
 
+    if (this.txMode === 'GIVE') {
+      payload.cash = this.activeAssets.cash ? (Number(this.assetsBrought.cash) || 0) : 0;
+      payload.goldGrams = this.activeAssets.gold ? (Number(this.assetsBrought.goldGrams) || 0) : 0;
+      payload.silverGrams = this.activeAssets.silver ? (Number(this.assetsBrought.silverGrams) || 0) : 0;
+    } else {
+      payload.cashCredit = finals.cash > current.cashBalance ? (finals.cash - current.cashBalance) : 0;
+      payload.goldCredit = finals.gold > current.goldBalance ? (finals.gold - current.goldBalance) : 0;
+      payload.silverCredit = finals.silver > current.silverBalance ? (finals.silver - current.silverBalance) : 0;
+    }
+
     this.partyService.processSettlement(current.id, payload).subscribe({
-      next: () => {
-        this.settled.emit();
-        this.resetForm();
-      },
-      error: (err) => console.error("Settlement tracking engine error:", err)
+      next: () => { this.settled.emit(); this.resetForm(); },
+      error: (err: any) => console.error("Settlement operational error:", err)
     });
-  }
-
-  // REFACTORED HIGH-FIDELITY WEB-PRINTER AND PDF GENERATOR
-  downloadLedgerPDF(): void {
-    if (!this.selectedParty) return;
-
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
-
-    const p = this.selectedParty;
-    const now = new Date();
-    
-    // Exact Timestamp parsing formatting patterns for file identifiers
-    const timestampStr = now.toLocaleDateString('en-IN').replace(/\//g, '-') + '_' + now.toLocaleTimeString('en-IN', { hour12: false }).replace(/:/g, '-');
-
-    let rowsHtml = '';
-    this.transactionHistory.forEach(tx => {
-      rowsHtml += `
-        <tr class="align-middle">
-          <td class="whitespace-nowrap">
-            <div class="date-txt">${tx.transactionDate.slice(0, 10)}</div>
-            <div class="time-txt">${tx.transactionDate.slice(11, 19)}</div>
-          </td>
-          <td class="font-sans font-bold">#${tx.id}</td>
-          <td class="font-sans text-left">${tx.description}</td>
-          <td class="text-right text-red">${tx.cashDebit > 0 ? this.fmtINR(tx.cashDebit) : '—'}</td>
-          <td class="text-right text-green">${tx.cashCredit > 0 ? this.fmtINR(tx.cashCredit) : '—'}</td>
-          <td class="text-right text-gold">${tx.goldDebit > 0 ? this.fmtGold(tx.goldDebit) : '—'}</td>
-          <td class="text-right text-red">${tx.goldCredit > 0 ? this.fmtGold(tx.goldCredit) : '—'}</td>
-          <td class="text-right text-blue">${tx.silverDebit > 0 ? this.fmtSilver(tx.silverDebit) : '—'}</td>
-          <td class="text-right text-red">${tx.silverCredit > 0 ? this.fmtSilver(tx.silverCredit) : '—'}</td>
-        </tr>
-      `;
-    });
-
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Ledger_${p.name.replace(/\s+/g, '_')}_${timestampStr}</title>
-          <style>
-            @page { size: A4 landscape; margin: 12mm; }
-            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #0f172a; margin: 0; padding: 0; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .header-container { background: #0f172a; color: white; padding: 24px; border-radius: 12px; margin-bottom: 24px; display: flex; justify-between: space-between; align-items: center; }
-            .company-title { margin: 0; font-size: 24px; font-weight: 900; letter-spacing: 0.5px; color: #f8fafc; }
-            .company-subtitle { margin: 4px 0 0 0; font-size: 11px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
-            .meta-section { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; background: #f8fafc; border: 1px solid #e2e8f0; padding: 20px; border-radius: 12px; margin-bottom: 24px; }
-            .profile-block p { margin: 4px 0; font-size: 13px; color: #334155; font-weight: 500; }
-            .profile-block strong { color: #0f172a; font-weight: 700; }
-            .balance-card { background: white; border: 1px solid #e2e8f0; padding: 10px 16px; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-            .balance-card:last-child { margin-bottom: 0; }
-            .balance-label { font-size: 11px; font-weight: 800; text-transform: uppercase; color: #64748b; tracking: 0.5px; }
-            .balance-value { font-family: "Courier New", Courier, monospace; font-size: 14px; font-weight: 900; }
-            table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 10px; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; }
-            th { background: #f1f5f9; color: #475569; padding: 10px 8px; font-size: 10px; font-weight: 800; text-transform: uppercase; border-bottom: 2px solid #cbd5e1; border-right: 1px solid #e2e8f0; }
-            th:last-child { border-right: none; }
-            td { padding: 10px 8px; border-bottom: 1px solid #e2e8f0; border-right: 1px solid #f1f5f9; font-family: "Courier New", Courier, monospace; font-size: 12px; font-weight: 600; color: #334155; text-align: center; }
-            td:last-child { border-right: none; }
-            .text-left { text-align: left !important; }
-            .text-right { text-align: right !important; }
-            .text-red { color: #dc2626 !important; font-weight: 700; }
-            .text-green { color: #16a34a !important; font-weight: 700; }
-            .text-gold { color: #b45309 !important; font-weight: 700; }
-            .text-blue { color: #1d4ed8 !important; font-weight: 700; }
-            .date-txt { font-family: system-ui; font-weight: 700; color: #1e293b; }
-            .time-txt { font-size: 10px; color: #64748b; margin-top: 2px; }
-          </style>
-        </head>
-        <body>
-          <div class="header-container">
-            <div>
-              <h1 class="company-title">VRUNDA JEWELLERS</h1>
-              <p class="company-subtitle">Double-Entry Core Banking Statement Ledger</p>
-            </div>
-            <div style="text-align: right; font-size: 12px; color: #94a3b8; font-weight: 500;">
-              Printed on: <span style="color: white; font-weight: 700;">${now.toLocaleDateString('en-IN')} ${now.toLocaleTimeString('en-IN')}</span>
-            </div>
-          </div>
-
-          <div class="meta-section">
-            <div class="profile-block">
-              <h4 style="margin: 0 0 10px 0; font-size: 12px; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px;">Customer Account Coordinates</h4>
-              <p><strong>Account Holder:</strong> ${p.name}</p>
-              <p><strong>Registered Firm:</strong> ${p.shopName || 'N/A'}</p>
-              <p><strong>City Location:</strong> ${p.city}</p>
-              <p><strong>Contact Registry:</strong> ${p.contact}</p>
-            </div>
-            <div>
-              <div class="balance-card">
-                <span class="balance-label">Cash Book Balance</span>
-                <span class="balance-value" style="color: ${p.cashBalance >= 0 ? '#16a34a' : '#dc2626'}">${this.fmtINR(p.cashBalance)}</span>
-              </div>
-              <div class="balance-card">
-                <span class="balance-label">Gold Metal Book Balance</span>
-                <span class="balance-value" style="color: #b45309;">${this.fmtGold(p.goldBalance)}</span>
-              </div>
-              <div class="balance-card">
-                <span class="balance-label">Silver Metal Book Balance</span>
-                <span class="balance-value" style="color: #1d4ed8;">${this.fmtSilver(p.silverBalance)}</span>
-              </div>
-            </div>
-          </div>
-
-          <table>
-            <thead>
-              <tr style="background: #e2e8f0;">
-                <th colspan="3" style="border-right: 2px solid #cbd5e1;">Transaction Details</th>
-                <th colspan="2" style="background: #fee2e2; color: #991b1b; border-right: 2px solid #cbd5e1;">Cash Vault Track (INR)</th>
-                <th colspan="2" style="background: #fef3c7; color: #92400e; border-right: 2px solid #cbd5e1;">Gold Metallic Track</th>
-                <th colspan="2" style="background: #dbeafe; color: #1e40af;">Silver Metallic Track</th>
-              </tr>
-              <tr>
-                <th style="width: 12%;">Timestamp</th>
-                <th style="width: 8%;">Voucher ID</th>
-                <th class="text-left" style="width: 26%;">Memo Description</th>
-                <th class="text-right" style="background: #fef2f2;">Debit (DR)</th>
-                <th class="text-right" style="background: #f0fdf4;">Credit (CR)</th>
-                <th class="text-right" style="background: #fffbeb;">DR (+)</th>
-                <th class="text-right" style="background: #fef2f2;">CR (-)</th>
-                <th class="text-right" style="background: #eff6ff;">DR (+)</th>
-                <th class="text-right" style="background: #fef2f2;">CR (-)</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${rowsHtml}
-            </tbody>
-          </table>
-
-          <script>
-            window.onload = function() {
-              setTimeout(letPrint => {
-                window.print();
-                window.close();
-              }, 250);
-            };
-          </script>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
   }
 
   resetInternalState(): void {
-    this.selectedParty = null;
-    this.customerSearchTerm = '';
-    this.transactionHistory = [];
-    this.descriptionNote = 'Counter Settlement';
-    this.settlementStrategy = 'SPECIFIC';
-    this.specificTarget = 'CASH';
+    this.selectedParty = null; this.customerSearchTerm = ''; this.transactionHistory = [];
+    this.calculationAuditTrail = []; this.filterFromDate = ''; this.filterToDate = ''; this.currentPage = 0;
+    this.txMode = 'RECEIVE'; this.settlementStrategy = 'CASCADE';
+    this.activeAssets = { cash: true, gold: true, silver: true };
+    this.sandbox = { inputValue: '', mode: 'CASH_TO_METALS', outputResult: '0.00 Metric' };
     this.cascadePriority = ['CASH', 'GOLD', 'SILVER'];
-    this.assetsBrought = { cash: 0, goldGrams: 0, goldRate: 7200, silverGrams: 0, silverRate: 88 };
+    this.globalRates = { gold: 72000, silver: 88000 };
+    this.assetsBrought = { cash: null as any, goldGrams: null as any, silverGrams: null as any };
   }
 
   resetForm(): void { this.resetInternalState(); this.close.emit(); }

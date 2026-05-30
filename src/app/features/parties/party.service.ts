@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { Observable, of} from 'rxjs';
+import { HttpClient, HttpParams } from '@angular/common/http';
 
 export interface Party {
   id: number;
@@ -31,13 +31,13 @@ export interface LedgerTransaction {
 }
 
 export interface TransactionRequest {
+  actionType: 'RECEIVE' | 'GIVE';
   description: string;
-  cashDebit: number;
-  cashCredit: number;
-  goldDebit: number;
-  goldCredit: number;
-  silverDebit: number;
-  silverCredit: number;
+  cash: number;
+  goldGrams: number;
+  goldRate: number;
+  silverGrams: number;
+  silverRate: number;
 }
 
 export interface UnsettledTransaction {
@@ -97,5 +97,27 @@ export class PartyService {
     
     // No unsettled items for other parties
     return [];
+  }
+
+  getPartyTransactionsPaged(
+    partyId: number,
+    fromDate: string,
+    toDate: string,
+    page: number,
+    size: number
+  ): Observable<any> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString());
+
+    // Only append date filters if they have values filled by the user
+    if (fromDate) {
+      params = params.set('fromDate', fromDate);
+    }
+    if (toDate) {
+      params = params.set('toDate', toDate);
+    }
+
+    return this.http.get<any>(`${this.apiUrl}/${partyId}/transactions`, { params });
   }
 }
