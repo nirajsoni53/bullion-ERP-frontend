@@ -1,6 +1,7 @@
 <div *ngIf="isOpen" class="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-xs bg-slate-950/40 p-2 font-sans overflow-hidden">
   <div class="bg-white w-full max-w-[98vw] rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col h-[96vh]">
     
+    <!-- Top Header Ribbon -->
     <div class="px-5 py-2 bg-slate-900 text-white flex flex-wrap items-center justify-between gap-4 shrink-0 min-h-12 shadow-md">
       <div class="flex items-center gap-4 flex-wrap">
         <div class="flex items-center gap-2">
@@ -32,26 +33,33 @@
       </button>
     </div>
 
+    <!-- Main Workspace Matrix Split -->
     <div class="flex-1 overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-0">
       
-      <div class="lg:col-span-6 p-3 flex flex-col min-h-0 overflow-hidden border-r border-slate-200 bg-slate-50/40">
+      <!-- Left Screen Pane: Ledger Analytics & Historical Grid -->
+      <div class="lg:col-span-7 p-3 flex flex-col min-h-0 overflow-hidden border-r border-slate-200 bg-slate-50/40">
         
+        <!-- Dropdown Customer Account Query Selector -->
         <div class="relative mb-2 shrink-0">
           <div class="flex items-center bg-white border border-slate-300 rounded-xl px-2.5 py-1 shadow-xs">
             <input type="text" [(ngModel)]="customerSearchTerm" (focus)="isDropdownOpen = true" placeholder="Search customer accounts..." class="w-full text-xs font-semibold outline-none bg-transparent text-slate-800" />
           </div>
-          <div *ngIf="isDropdownOpen && filteredParties.length > 0" class="absolute z-50 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl max-h-32 overflow-y-auto">
+          <div class="absolute z-50 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl max-h-32 overflow-y-auto" *ngIf="isDropdownOpen && filteredParties.length > 0">
             <div *ngFor="let party of filteredParties" (click)="selectParty(party)" class="p-2 hover:bg-slate-50 cursor-pointer text-xs font-bold text-slate-800">
               {{ party.name }} <span class="text-slate-400 font-normal">({{ party.city }})</span>
             </div>
           </div>
         </div>
 
+        <!-- Missing Selection Placeholder State -->
         <div *ngIf="!selectedParty" class="flex-1 flex flex-col items-center justify-center text-slate-400 border-2 border-dashed border-slate-200 rounded-xl p-4 bg-slate-50/50">
           <p class="text-xs font-bold">Select a customer account to unlock the settlement matrix.</p>
         </div>
 
+        <!-- Ledger Container Context Blocks -->
         <div *ngIf="selectedParty" class="flex-1 flex flex-col min-h-0 space-y-2">
+          
+          <!-- Filter Controls and Secondary Actions Panel -->
           <div class="bg-white border border-slate-200 p-1.5 rounded-xl flex items-center justify-between gap-2 shrink-0 text-xs">
             <div class="flex items-center gap-1.5">
               <span class="font-black text-slate-400 uppercase text-[9px] tracking-wider">Date Filters:</span>
@@ -67,6 +75,7 @@
             </button>
           </div>
 
+          <!-- Multi-Asset Multi-Track Statement Grid -->
           <div class="flex-1 flex flex-col min-h-0 border border-slate-200 rounded-xl overflow-hidden bg-white shadow-3xs">
             <div class="flex-1 overflow-auto max-h-[44vh]">
               <table class="w-full text-left border-collapse text-[11px]">
@@ -111,6 +120,7 @@
               </table>
             </div>
 
+            <!-- Table Pagination Footnote Controller -->
             <div class="bg-slate-50 border-t border-slate-200 px-3 py-1.5 flex items-center justify-between shrink-0 text-xs font-medium text-slate-500 h-10">
               <div class="flex items-center gap-2">
                 <span>Total Items: <b>{{ totalElements }}</b></span>
@@ -128,6 +138,7 @@
             </div>
           </div>
 
+          <!-- Sandbox Live Translation Area -->
           <div class="bg-slate-900 text-white rounded-xl p-2.5 space-y-1.5 border border-slate-800 shadow-lg">
             <div class="flex justify-between items-center border-b border-slate-800 pb-1">
               <span class="text-[9px] font-black text-indigo-400 uppercase tracking-wider block">⚡ Live Asset Value Translator Sandbox</span>
@@ -153,130 +164,177 @@
         </div>
       </div>
 
-      <div class="lg:col-span-6 p-3 bg-slate-50 flex flex-col justify-between min-h-0 overflow-y-auto max-h-[88vh]">
+      <!-- Right Screen Pane: Entry Modals, Strategy Selectors, and Commit Mechanism -->
+      <div class="lg:col-span-5 p-3 bg-slate-50 flex flex-col justify-between min-h-0 overflow-y-auto max-h-[88vh]">
         
         <div class="space-y-3" *ngIf="selectedParty">
           
+          <!-- Direction Operations Switch -->
           <div class="grid grid-cols-2 gap-1 p-0.5 bg-slate-200 rounded-lg shrink-0">
             <button (click)="txMode = 'RECEIVE'" type="button" [class]="txMode === 'RECEIVE' ? 'bg-emerald-600 text-white font-bold shadow-2xs' : 'text-slate-600 font-semibold'" class="py-1 text-xs rounded-md cursor-pointer">⬇ Client Paying Us</button>
             <button (click)="txMode = 'GIVE'" type="button" [class]="txMode === 'GIVE' ? 'bg-indigo-600 text-white font-bold shadow-2xs' : 'text-slate-600 font-semibold'" class="py-1 text-xs rounded-md cursor-pointer">⬆ Handing to Client</button>
           </div>
 
+          <!-- Asset Processing Panel Structure -->
           <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-start">
             
-            <div class="md:col-span-5 bg-white border border-slate-200 p-2 rounded-xl shadow-3xs space-y-2">
-              <label class="block text-[9px] font-black text-slate-400 uppercase tracking-wider">Asset Counters</label>
+            <!-- Asset Counters Component Column -->
+            <div [class]="txMode === 'RECEIVE' ? 'md:col-span-5' : 'md:col-span-12'" class="bg-white border border-slate-200/80 p-3 rounded-2xl shadow-xs space-y-3">
+              <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Asset Counters</label>
               
-              <div class="space-y-0.5" [class.opacity-40]="!activeAssets.cash">
-                <div class="flex items-center gap-1.5 text-[11px] font-bold text-slate-700">
-                  <input type="checkbox" [(ngModel)]="activeAssets.cash" (change)="validateActiveAssetCount()" class="w-3.5 h-3.5 rounded border-slate-300 text-slate-900 cursor-pointer" />
-                  <span>💵 Cash Amount</span>
+              <div class="space-y-2.5">
+                <!-- Cash Counter Entry Card -->
+                <div class="flex flex-col gap-1 p-2 rounded-xl border transition-all" [class]="activeAssets.cash ? 'border-slate-200 bg-slate-50/40' : 'border-slate-100 bg-white opacity-40'">
+                  <div class="flex items-center justify-between">
+                    <label class="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer select-none">
+                      <input type="checkbox" [(ngModel)]="activeAssets.cash" (change)="validateActiveAssetCount()" class="w-4 h-4 accent-slate-900 rounded border-slate-300 cursor-pointer" />
+                      <span>💵 Cash Amount</span>
+                    </label>
+                  </div>
+                  <div class="relative mt-1 flex items-center">
+                    <span class="absolute left-2.5 font-mono text-xs text-slate-400 font-bold">₹</span>
+                    <input type="text" inputmode="numeric" pattern="[0-9]*" [disabled]="!activeAssets.cash" [(ngModel)]="assetsBrought.cash" class="w-full text-right pl-6 pr-2.5 py-1.5 bg-white border border-slate-200 focus:border-slate-400 rounded-lg font-mono font-bold text-xs outline-none transition-colors shadow-2xs" placeholder="0" />
+                  </div>
                 </div>
-                <input type="text" inputmode="numeric" pattern="[0-9]*" [disabled]="!activeAssets.cash" [(ngModel)]="assetsBrought.cash" class="w-full text-right px-2 py-1 bg-slate-50 border border-slate-200 rounded-md font-mono font-bold text-xs outline-none" placeholder="0" />
-              </div>
 
-              <div class="space-y-0.5" [class.opacity-40]="!activeAssets.gold">
-                <div class="flex items-center gap-1.5 text-[11px] font-bold text-amber-900">
-                  <input type="checkbox" [(ngModel)]="activeAssets.gold" (change)="validateActiveAssetCount()" class="w-3.5 h-3.5 rounded border-amber-300 text-amber-600 cursor-pointer" />
-                  <span>🏆 Gold Grams</span>
+                <!-- Gold Weight Entry Card -->
+                <div class="flex flex-col gap-1 p-2 rounded-xl border transition-all" [class]="activeAssets.gold ? 'border-amber-200 bg-amber-50/10' : 'border-slate-100 bg-white opacity-40'">
+                  <div class="flex items-center justify-between">
+                    <label class="flex items-center gap-2 text-xs font-bold text-amber-950 cursor-pointer select-none">
+                      <input type="checkbox" [(ngModel)]="activeAssets.gold" (change)="validateActiveAssetCount()" class="w-4 h-4 accent-amber-600 rounded border-amber-300 cursor-pointer" />
+                      <span>🏆 Gold Weight</span>
+                    </label>
+                  </div>
+                  <div class="relative mt-1 flex items-center">
+                    <input type="text" inputmode="numeric" pattern="[0-9]*" [disabled]="!activeAssets.gold" [(ngModel)]="assetsBrought.goldGrams" class="w-full text-right pr-8 pl-2.5 py-1.5 bg-white border border-slate-200 focus:border-amber-400 rounded-lg font-mono font-bold text-xs outline-none transition-colors shadow-2xs" placeholder="0.000" />
+                    <span class="absolute right-2.5 font-sans text-[10px] text-slate-400 font-bold">g</span>
+                  </div>
                 </div>
-                <input type="text" inputmode="numeric" pattern="[0-9]*" [disabled]="!activeAssets.gold" [(ngModel)]="assetsBrought.goldGrams" class="w-full text-right px-2 py-1 bg-slate-50 border border-slate-200 rounded-md font-mono font-bold text-xs outline-none" placeholder="0.000" />
-              </div>
 
-              <div class="space-y-0.5" [class.opacity-40]="!activeAssets.silver">
-                <div class="flex items-center gap-1.5 text-[11px] font-bold text-blue-900">
-                  <input type="checkbox" [(ngModel)]="activeAssets.silver" (change)="validateActiveAssetCount()" class="w-3.5 h-3.5 rounded border-blue-300 text-blue-600 cursor-pointer" />
-                  <span>🥈 Silver Grams</span>
+                <!-- Silver Weight Entry Card -->
+                <div class="flex flex-col gap-1 p-2 rounded-xl border transition-all" [class]="activeAssets.silver ? 'border-blue-200 bg-blue-50/10' : 'border-slate-100 bg-white opacity-40'">
+                  <div class="flex items-center justify-between">
+                    <label class="flex items-center gap-2 text-xs font-bold text-blue-950 cursor-pointer select-none">
+                      <input type="checkbox" [(ngModel)]="activeAssets.silver" (change)="validateActiveAssetCount()" class="w-4 h-4 accent-blue-600 rounded border-blue-300 cursor-pointer" />
+                      <span>🥈 Silver Weight</span>
+                    </label>
+                  </div>
+                  <div class="relative mt-1 flex items-center">
+                    <input type="text" inputmode="numeric" pattern="[0-9]*" [disabled]="!activeAssets.silver" [(ngModel)]="assetsBrought.silverGrams" class="w-full text-right pr-8 pl-2.5 py-1.5 bg-white border border-slate-200 focus:border-blue-400 rounded-lg font-mono font-bold text-xs outline-none transition-colors shadow-2xs" placeholder="0.000" />
+                    <span class="absolute right-2.5 font-sans text-[10px] text-slate-400 font-bold">g</span>
+                  </div>
                 </div>
-                <input type="text" inputmode="numeric" pattern="[0-9]*" [disabled]="!activeAssets.silver" [(ngModel)]="assetsBrought.silverGrams" class="w-full text-right px-2 py-1 bg-slate-50 border border-slate-200 rounded-md font-mono font-bold text-xs outline-none" placeholder="0.000" />
               </div>
             </div>
 
-            <div class="md:col-span-7 bg-white border border-slate-200 p-2 rounded-xl shadow-3xs space-y-1.5" *ngIf="txMode === 'RECEIVE'">
-              <label class="block text-[9px] font-black text-slate-400 uppercase tracking-wider">Processing Strategy Selection</label>
+            <!-- Strategy Selection Column -->
+            <div class="md:col-span-7 bg-white border border-slate-200/80 p-3 rounded-2xl shadow-xs space-y-2.5" *ngIf="txMode === 'RECEIVE'">
+              <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">How to Process Payment</label>
               
-              <div class="flex flex-col gap-1 max-h-[175px] overflow-y-auto pr-0.5">
-                <button type="button" (click)="setStrategyMode('AS_IS')" [class]="settlementStrategy === 'AS_IS' ? 'bg-slate-900 text-white border-slate-900' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'" class="p-1.5 border text-left rounded-lg transition-all cursor-pointer">
-                  <div class="text-[11px] font-black">📥 Direct (As-Is) Ledger</div>
-                  <div class="text-[8px] opacity-70 font-medium">Cash to Cash, Metal to Metal rules</div>
+              <div class="flex flex-col gap-2 max-h-[220px] overflow-y-auto pr-1 custom-scrollbar">
+                <!-- Strategy Mode: Keep Assets Separate -->
+                <button type="button" (click)="setStrategyMode('AS_IS')" 
+                  [class]="(!settlementStrategy || settlementStrategy === 'AS_IS') ? 'border-slate-900 bg-slate-900 text-white shadow-sm' : 'bg-slate-50/60 text-slate-700 border-slate-200 hover:bg-slate-100/80'" 
+                  class="p-2 border text-left rounded-xl transition-all duration-200 cursor-pointer flex items-center justify-between group">
+                  <div>
+                    <div class="text-xs font-bold flex items-center gap-1.5">📥 Keep Assets Separate <span class="text-[8px] bg-indigo-500/30 text-indigo-300 px-1 rounded font-normal">Default</span></div>
+                    <div class="text-[9px] mt-0.5 font-medium" [class]="(!settlementStrategy || settlementStrategy === 'AS_IS') ? 'text-slate-300' : 'text-slate-400'">Add cash to cash balance, metal to metal balance</div>
+                  </div>
+                  <div class="w-4 h-4 rounded-full border flex items-center justify-center transition-colors shrink-0" [class]="(!settlementStrategy || settlementStrategy === 'AS_IS') ? 'border-emerald-400 bg-emerald-500' : 'border-slate-300 bg-white'">
+                    <div *ngIf="!settlementStrategy || settlementStrategy === 'AS_IS'" class="w-1.5 h-1.5 rounded-full bg-white"></div>
+                  </div>
                 </button>
 
-                <button type="button" (click)="setStrategyMode('SPECIFIC_CASH')" [class]="settlementStrategy === 'SPECIFIC' && specificTarget === 'CASH' ? 'bg-slate-900 text-white border-slate-900' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'" class="p-1.5 border text-left rounded-lg transition-all cursor-pointer" [disabled]="!activeAssets.cash" [class.opacity-40]="!activeAssets.cash">
-                  <div class="text-[11px] font-black">💵 Force All into Cash</div>
+                <!-- Strategy Mode: Convert Everything to Cash -->
+                <button type="button" (click)="setStrategyMode('SPECIFIC_CASH')" [disabled]="!activeAssets.cash"
+                  [class]="settlementStrategy === 'SPECIFIC' && specificTarget === 'CASH' ? 'border-slate-900 bg-slate-900 text-white shadow-sm' : 'bg-slate-50/60 text-slate-700 border-slate-200 hover:bg-slate-100/80 disabled:opacity-30'" 
+                  class="p-2 border text-left rounded-xl transition-all duration-200 cursor-pointer flex items-center justify-between group">
+                  <div>
+                    <div class="text-xs font-bold flex items-center gap-1.5">💵 Convert Everything to Cash</div>
+                    <div class="text-[9px] mt-0.5 font-medium" [class]="settlementStrategy === 'SPECIFIC' && specificTarget === 'CASH' ? 'text-slate-300' : 'text-slate-400'">Calculate gold/silver value and put everything into cash account</div>
+                  </div>
+                  <div class="w-4 h-4 rounded-full border flex items-center justify-center transition-colors shrink-0" [class]="settlementStrategy === 'SPECIFIC' && specificTarget === 'CASH' ? 'border-emerald-400 bg-emerald-500' : 'border-slate-300 bg-white'">
+                    <div *ngIf="settlementStrategy === 'SPECIFIC' && specificTarget === 'CASH'" class="w-1.5 h-1.5 rounded-full bg-white"></div>
+                  </div>
                 </button>
 
-                <button type="button" (click)="setStrategyMode('SPECIFIC_GOLD')" [class]="settlementStrategy === 'SPECIFIC' && specificTarget === 'GOLD' ? 'bg-slate-900 text-white border-slate-900' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'" class="p-1.5 border text-left rounded-lg transition-all cursor-pointer" [disabled]="!activeAssets.gold" [class.opacity-40]="!activeAssets.gold">
-                  <div class="text-[11px] font-black">🏆 Force All into Gold Account</div>
+                <!-- Strategy Mode: Convert Everything to Gold -->
+                <button type="button" (click)="setStrategyMode('SPECIFIC_GOLD')" [disabled]="!activeAssets.gold"
+                  [class]="settlementStrategy === 'SPECIFIC' && specificTarget === 'GOLD' ? 'border-slate-900 bg-slate-900 text-white shadow-sm' : 'bg-slate-50/60 text-slate-700 border-slate-200 hover:bg-slate-100/80 disabled:opacity-30'" 
+                  class="p-2 border text-left rounded-xl transition-all duration-200 cursor-pointer flex items-center justify-between group">
+                  <div>
+                    <div class="text-xs font-bold flex items-center gap-1.5">🏆 Convert Everything to Gold</div>
+                    <div class="text-[9px] mt-0.5 font-medium" [class]="settlementStrategy === 'SPECIFIC' && specificTarget === 'GOLD' ? 'text-slate-300' : 'text-slate-400'">Change cash value into gold weight and put into gold account</div>
+                  </div>
+                  <div class="w-4 h-4 rounded-full border flex items-center justify-center transition-colors shrink-0" [class]="settlementStrategy === 'SPECIFIC' && specificTarget === 'GOLD' ? 'border-emerald-400 bg-emerald-500' : 'border-slate-300 bg-white'">
+                    <div *ngIf="settlementStrategy === 'SPECIFIC' && specificTarget === 'GOLD'" class="w-1.5 h-1.5 rounded-full bg-white"></div>
+                  </div>
                 </button>
 
-                <button type="button" (click)="setStrategyMode('SPECIFIC_SILVER')" [class]="settlementStrategy === 'SPECIFIC' && specificTarget === 'SILVER' ? 'bg-slate-900 text-white border-slate-900' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'" class="p-1.5 border text-left rounded-lg transition-all cursor-pointer" [disabled]="!activeAssets.silver" [class.opacity-40]="!activeAssets.silver">
-                  <div class="text-[11px] font-black">🥈 Force All into Silver Weight Tracker</div>
+                <!-- Strategy Mode: Convert Everything to Silver -->
+                <button type="button" (click)="setStrategyMode('SPECIFIC_SILVER')" [disabled]="!activeAssets.silver"
+                  [class]="settlementStrategy === 'SPECIFIC' && specificTarget === 'SILVER' ? 'border-slate-900 bg-slate-900 text-white shadow-sm' : 'bg-slate-50/60 text-slate-700 border-slate-200 hover:bg-slate-100/80 disabled:opacity-30'" 
+                  class="p-2 border text-left rounded-xl transition-all duration-200 cursor-pointer flex items-center justify-between group">
+                  <div>
+                    <div class="text-xs font-bold flex items-center gap-1.5">🥈 Convert Everything to Silver</div>
+                    <div class="text-[9px] mt-0.5 font-medium" [class]="settlementStrategy === 'SPECIFIC' && specificTarget === 'SILVER' ? 'text-slate-300' : 'text-slate-400'">Change cash value into silver weight and put into silver account</div>
+                  </div>
+                  <div class="w-4 h-4 rounded-full border flex items-center justify-center transition-colors shrink-0" [class]="settlementStrategy === 'SPECIFIC' && specificTarget === 'SILVER' ? 'border-emerald-400 bg-emerald-500' : 'border-slate-300 bg-white'">
+                    <div *ngIf="settlementStrategy === 'SPECIFIC' && specificTarget === 'SILVER'" class="w-1.5 h-1.5 rounded-full bg-white"></div>
+                  </div>
                 </button>
 
-                <button type="button" (click)="setStrategyMode('CASCADE')" [class]="settlementStrategy === 'CASCADE' ? 'bg-slate-900 text-white border-slate-900' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'" class="p-1.5 border text-left rounded-lg transition-all cursor-pointer">
-                  <div class="text-[11px] font-black">🔄 Smart Priority Queue</div>
-                  <div class="text-[8px] opacity-70 font-medium">Clears oldest lines step-by-step</div>
+                <!-- Strategy Mode: Auto-Clear Due Balances -->
+                <button type="button" (click)="setStrategyMode('CASCADE')" 
+                  [class]="settlementStrategy === 'CASCADE' ? 'border-slate-900 bg-slate-900 text-white shadow-sm' : 'bg-slate-50/60 text-slate-700 border-slate-200 hover:bg-slate-100/80'" 
+                  class="p-2 border text-left rounded-xl transition-all duration-200 cursor-pointer flex items-center justify-between group">
+                  <div>
+                    <div class="text-xs font-bold flex items-center gap-1.5">🔄 Auto-Clear Due Balances</div>
+                    <div class="text-[9px] mt-0.5 font-medium" [class]="settlementStrategy === 'CASCADE' ? 'text-slate-300' : 'text-slate-400'">Automatically uses your values to clear whichever balance is due first</div>
+                  </div>
+                  <div class="w-4 h-4 rounded-full border flex items-center justify-center transition-colors shrink-0" [class]="settlementStrategy === 'CASCADE' ? 'border-emerald-400 bg-emerald-500' : 'border-slate-300 bg-white'">
+                    <div *ngIf="settlementStrategy === 'CASCADE'" class="w-1.5 h-1.5 rounded-full bg-white"></div>
+                  </div>
                 </button>
               </div>
             </div>
 
           </div>
 
-          <div *ngIf="txMode === 'RECEIVE' && settlementStrategy === 'CASCADE'" class="p-2 bg-slate-100 border rounded-xl space-y-1">
-            <label class="block text-[9px] font-black text-indigo-600 uppercase tracking-wider">Configure Priority Queue Order</label>
-            <div class="flex items-center gap-1.5 flex-wrap">
-              <div *ngFor="let asset of displayPriorityQueue; let i = index" class="flex items-center gap-1 bg-white px-2 py-0.5 rounded border shadow-3xs text-[11px] font-bold text-slate-800 font-mono">
-                <span>{{ i + 1 }}. {{ asset }}</span>
-                <div class="flex flex-col text-[8px] leading-none ml-1 text-slate-400">
-                  <button type="button" *ngIf="i > 0" (click)="shiftPriorityOrder(i, -1)" class="hover:text-slate-900 cursor-pointer">▲</button>
-                  <button type="button" *ngIf="i < displayPriorityQueue.length - 1" (click)="shiftPriorityOrder(i, 1)" class="hover:text-slate-900 cursor-pointer">▼</button>
+          <!-- Sequence Pipeline Ribbon Layout -->
+          <div *ngIf="txMode === 'RECEIVE' && settlementStrategy === 'CASCADE'" class="p-3 bg-slate-900 text-white border border-slate-800 rounded-2xl shadow-md space-y-2.5">
+            <div class="flex items-center justify-between">
+              <label class="block text-[10px] font-bold text-indigo-400 uppercase tracking-wider">Processing Sequence Order</label>
+              <span class="text-[9px] text-slate-400 font-sans">Use arrows to prioritize account type</span>
+            </div>
+            
+            <div class="flex items-center justify-start bg-slate-950 p-2.5 rounded-xl border border-slate-800 gap-2 overflow-x-auto">
+              <div *ngFor="let asset of displayPriorityQueue; let i = index" class="flex items-center gap-2 shrink-0">
+                
+                <!-- Pipeline Pill Box -->
+                <div class="flex items-center gap-2 bg-slate-900 pl-3 pr-2 py-1.5 rounded-lg border border-slate-800 shadow-sm font-mono text-xs font-bold">
+                  <span class="text-[10px] text-indigo-400 font-sans font-black">#{{ i + 1 }}</span>
+                  <span class="text-slate-200">{{ asset }}</span>
+                  
+                  <!-- Compact Control Triggers -->
+                  <div class="flex items-center ml-2 border-l border-slate-800 pl-1.5 gap-1 text-[10px]">
+                    <button type="button" *ngIf="i > 0" (click)="shiftPriorityOrder(i, -1)" class="text-slate-500 hover:text-white transition-colors cursor-pointer px-0.5">◀</button>
+                    <button type="button" *ngIf="i < displayPriorityQueue.length - 1" (click)="shiftPriorityOrder(i, 1)" class="text-slate-500 hover:text-white transition-colors cursor-pointer px-0.5">▶</button>
+                  </div>
                 </div>
+
+                <!-- Connective Node Chevron -->
+                <div *ngIf="i < displayPriorityQueue.length - 1" class="text-slate-600 font-bold animate-pulse text-xs">➔</div>
               </div>
             </div>
           </div>
 
+          <!-- Audit Notation Input -->
           <div class="p-2 bg-white border border-slate-200 rounded-xl shadow-3xs">
             <input type="text" [(ngModel)]="descriptionNote" placeholder="Voucher audit memo notation..." class="w-full px-2 py-0.5 text-xs bg-slate-50 border border-slate-200 rounded-md font-medium text-slate-800 outline-none" />
           </div>
 
-          <div *ngIf="txMode === 'RECEIVE' && totalBroughtValue > 0" class="p-3 bg-white border border-slate-300 rounded-xl space-y-2 shadow-xs border-t-4 border-t-indigo-600">
-            <div class="flex justify-between items-center border-b border-slate-100 pb-1">
-              <span class="text-[10px] font-black text-slate-800 uppercase tracking-wider">📄 Valuation Breakdown Summary</span>
-              <span class="text-[10px] font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md font-bold">Mode: {{ settlementStrategy }}</span>
-            </div>
-            
-            <div class="space-y-1">
-              <div class="grid grid-cols-12 gap-1 px-1 text-[9px] font-black text-slate-400 uppercase tracking-wider">
-                <div class="col-span-4">Asset Type</div>
-                <div class="col-span-3 text-right">Applied Rate</div>
-                <div class="col-span-5 text-right">Settled Value Amount</div>
-              </div>
-
-              <div *ngIf="assetsBrought.cash > 0" class="grid grid-cols-12 gap-1 items-center bg-slate-50 border border-slate-100 rounded-lg p-1 text-xs font-mono">
-                <div class="col-span-4 flex items-center gap-1 font-sans font-bold text-slate-700">💵 Cash</div>
-                <div class="col-span-3 text-right text-slate-400 text-[10px]">Direct Base</div>
-                <div class="col-span-5 text-right text-slate-900 font-black">₹{{ assetsBrought.cash }}</div>
-              </div>
-
-              <div *ngIf="assetsBrought.goldGrams > 0" class="grid grid-cols-12 gap-1 items-center bg-slate-50 border border-slate-100 rounded-lg p-1 text-xs font-mono">
-                <div class="col-span-4 flex items-center gap-1 font-sans font-bold text-slate-700">🏆 Gold <span class="text-[9px] font-normal text-slate-400">({{ assetsBrought.goldGrams }}g)</span></div>
-                <div class="col-span-3 text-right text-slate-500 text-[10px]">₹{{ globalRates.gold }}/10g</div>
-                <div class="col-span-5 text-right text-slate-900 font-black">₹{{ ((assetsBrought.goldGrams / 10) * globalRates.gold).toFixed(0) }}</div>
-              </div>
-
-              <div *ngIf="assetsBrought.silverGrams > 0" class="grid grid-cols-12 gap-1 items-center bg-slate-50 border border-slate-100 rounded-lg p-1 text-xs font-mono">
-                <div class="col-span-4 flex items-center gap-1 font-sans font-bold text-slate-700">🥈 Silver <span class="text-[9px] font-normal text-slate-400">({{ assetsBrought.silverGrams }}g)</span></div>
-                <div class="col-span-3 text-right text-slate-500 text-[10px]">₹{{ globalRates.silver }}/1kg</div>
-                <div class="col-span-5 text-right text-slate-900 font-black">₹{{ ((assetsBrought.silverGrams / 1000) * globalRates.silver).toFixed(0) }}</div>
-              </div>
-
-              <div class="flex items-center justify-between pt-1 border-t border-dashed border-slate-200 mt-1">
-                <span class="text-xs font-bold text-slate-800">Total Net Working Pool Value:</span>
-                <span class="text-sm font-black text-emerald-600 font-mono">₹{{ totalBroughtValue.toFixed(0) }}</span>
-              </div>
-            </div>
-          </div>
-
+          <!-- Expected End-State Balances Projections Matrix -->
           <div class="bg-slate-900 border border-slate-800 text-white rounded-xl p-2 shadow-sm">
             <div class="flex justify-between items-center text-[9px] font-sans font-black uppercase tracking-wider text-slate-400 border-b border-slate-800 pb-1 mb-1.5">
               <span>🎯 Forecasted Account Balances Outcome</span>
@@ -299,9 +357,10 @@
 
         </div>
 
+        <!-- Submission Trigger Deck Footer -->
         <div class="flex items-center gap-2 pt-2 shrink-0 border-t border-slate-200 bg-slate-50">
           <button (click)="resetForm()" type="button" class="flex-1 py-1.5 border border-slate-300 text-slate-700 bg-white hover:bg-slate-100 rounded-xl text-xs font-bold cursor-pointer">Cancel</button>
-          <button (click)="submitTransaction()" [disabled]="!selectedParty || totalBroughtValue <= 0" class="flex-1 py-1.5 rounded-xl text-xs font-black shadow-md cursor-pointer text-white" [class]="txMode === 'RECEIVE' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-indigo-600 hover:bg-indigo-700'">
+          <button (click)="submitTransaction()" [disabled]="!selectedParty" class="flex-1 py-1.5 rounded-xl text-xs font-black shadow-md cursor-pointer text-white" [class]="txMode === 'RECEIVE' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-indigo-600 hover:bg-indigo-700'">
             Commit Ledger Settlement
           </button>
         </div>

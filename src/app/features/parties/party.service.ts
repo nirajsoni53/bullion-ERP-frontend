@@ -47,6 +47,7 @@ export interface UnsettledTransaction {
   pendingAmount: number;
   isSelected?: boolean;
   settleAmount?: number;
+  type?: 'CASH' | 'GOLD' | 'SILVER';
 }
 
 @Injectable({ providedIn: 'root' })

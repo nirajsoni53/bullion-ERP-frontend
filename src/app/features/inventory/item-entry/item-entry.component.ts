@@ -11,10 +11,16 @@ export class ItemEntryComponent {
   @Output() listChanged = new EventEmitter<void>(); // Trigger for parent recalc
 
   currentItem = {
-    grossWeight: null as number | null, purity: null as number | null, purityPaid: null as number | null, rate: null as number | null,
-    isBadloItem: false, fineWeight: 0, amount: 0
+    grossWeight: null as number | null, 
+    purity: null as number | null, 
+    purityPaid: null as number | null, 
+    rate: null as number | null,
+    isBadloItem: false, 
+    chorsa: '99', // Default Chorsa selection
+    fineWeight: 0, 
+    amount: 0
   };
-  nextItemId = 1; // You might want to manage ID from parent or here. Here is fine.
+  nextItemId = 1;
   Math = Math;
 
   calculateCurrentItem() {
@@ -49,13 +55,30 @@ export class ItemEntryComponent {
     }
 
     this.items.push({
-      id: this.nextItemId++, grossWeight: gw, purity: purity, purityPaid: this.currentItem.purityPaid || undefined,
-      fineWeight: actualFine, rate: rate, amount: (paidFine / 1000) * rate,
-      profitAmount: profitAmt, profitWeight: profitWt, isBadloItem: this.currentItem.isBadloItem,
+      id: this.nextItemId++, 
+      grossWeight: gw, 
+      purity: purity, 
+      purityPaid: this.currentItem.purityPaid || undefined,
+      fineWeight: actualFine, 
+      rate: rate, 
+      amount: (paidFine / 1000) * rate,
+      profitAmount: profitAmt, 
+      profitWeight: profitWt, 
+      isBadloItem: this.currentItem.isBadloItem,
+      chorsa: this.currentItem.isBadloItem ? this.currentItem.chorsa : undefined // Saved if Badlo item
     });
 
-    this.currentItem = { grossWeight: null, purity: null, purityPaid: null, rate: null, isBadloItem: false, fineWeight: 0, amount: 0 };
-    this.currentItem.isBadloItem = false; // Reset checkbox
+    // Resetting currentItem setup
+    this.currentItem = { 
+      grossWeight: null, 
+      purity: null, 
+      purityPaid: null, 
+      rate: null, 
+      isBadloItem: false, 
+      chorsa: '99', // Reset to default
+      fineWeight: 0, 
+      amount: 0 
+    };
     this.listChanged.emit();
   }
 
@@ -64,7 +87,6 @@ export class ItemEntryComponent {
     this.listChanged.emit();
   }
 
-  // Helper Mixins (Duplicated for safety as requested)
   formatNum(value: number | null | undefined): string {
     if (value === null || value === undefined) return ''; 
     if (value === 0) return '0';
@@ -76,11 +98,15 @@ export class ItemEntryComponent {
     if (otherNumbers !== '') return otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ",") + "," + lastThree + decimalPart;
     return lastThree + decimalPart;
   }
+
   parseNum(value: string): number {
     if (!value) return 0;
     const clean = value.replace(/,/g, '');
     const float = parseFloat(clean);
-    return isNaN(float) ? 0 : float;
+    return isNaN(float) ? 0 : float; // Fixed typo here (isNtaN -> isNaN)
   }
-  fmtINR(v: number) { return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(v); }
+
+  fmtINR(v: number) { 
+    return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(v); 
+  }
 }

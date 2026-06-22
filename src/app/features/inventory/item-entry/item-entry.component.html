@@ -1,66 +1,83 @@
 <div class="p-6 bg-slate-50 border-b border-slate-200">
-       <div class="grid grid-cols-12 gap-2 mb-4 items-end bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
-          <div class="col-span-1 text-center">
-             <label class="text-[9px] font-bold text-orange-500 uppercase block mb-2 cursor-pointer">Badlo?</label>
-             <input type="checkbox" [(ngModel)]="currentItem.isBadloItem" (change)="calculateCurrentItem()" class="w-4 h-4 text-orange-500 rounded cursor-pointer" />
-          </div>
-          <div class="col-span-3">
-             <label class="text-[10px] font-bold text-slate-400 uppercase">Gross Wt</label>
-             <input [ngModel]="formatNum(currentItem.grossWeight)" (ngModelChange)="currentItem.grossWeight = parseNum($event); calculateCurrentItem()" type="text" inputmode="numeric" class="w-full px-2 py-2 border border-slate-300 rounded text-sm font-mono font-bold" placeholder="0.00" />
-          </div>
-          <div class="col-span-2">
-             <label class="text-[10px] font-bold text-slate-400 uppercase">Purity %</label>
-             <input [ngModel]="formatNum(currentItem.purity)" (ngModelChange)="currentItem.purity = parseNum($event); calculateCurrentItem()" type="text" inputmode="numeric" class="w-full px-2 py-2 border border-slate-300 rounded text-sm font-mono" placeholder="0" />
-          </div>
-          <div class="col-span-2">
-             <label class="text-[10px] font-bold text-slate-400 uppercase">Paid %</label>
-             <input [ngModel]="formatNum(currentItem.purityPaid)" (ngModelChange)="currentItem.purityPaid = parseNum($event); calculateCurrentItem()" type="text" inputmode="numeric" class="w-full px-2 py-2 border border-slate-300 rounded text-sm font-mono" placeholder="0" />
-          </div>
-          <div class="col-span-2">
-             <label class="text-[10px] font-bold text-slate-400 uppercase">Rate</label>
-             <input [ngModel]="formatNum(currentItem.rate)" (ngModelChange)="currentItem.rate = parseNum($event); calculateCurrentItem()" [disabled]="currentItem.isBadloItem" [placeholder]="currentItem.isBadloItem ? '---' : '0'" type="text" inputmode="numeric" class="w-full px-2 py-2 border border-slate-300 rounded text-sm font-mono disabled:bg-slate-100 disabled:text-slate-400" />
-          </div>
-          <div class="col-span-2">
-             <button (click)="addItem()" class="w-full py-2 bg-blue-600 text-white font-bold text-xs rounded shadow hover:bg-blue-700 transition-colors">ADD</button>
-          </div>
-       </div>
+   <div class="grid grid-cols-12 gap-2 mb-4 items-end bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
+      <div class="col-span-1 text-center">
+         <label class="text-[9px] font-bold text-orange-500 uppercase block mb-2 cursor-pointer">Badlo?</label>
+         <input type="checkbox" [(ngModel)]="currentItem.isBadloItem" (change)="calculateCurrentItem()" class="w-4 h-4 text-orange-500 rounded cursor-pointer" />
+      </div>
+      <div class="col-span-3">
+         <label class="text-[10px] font-bold text-slate-400 uppercase">Gross Wt</label>
+         <input [ngModel]="formatNum(currentItem.grossWeight)" (ngModelChange)="currentItem.grossWeight = parseNum($event); calculateCurrentItem()" type="text" inputmode="numeric" class="w-full px-2 py-2 border border-slate-300 rounded text-sm font-mono font-bold" placeholder="0.00" />
+      </div>
+      <div class="col-span-2">
+         <label class="text-[10px] font-bold text-slate-400 uppercase">Purity %</label>
+         <input [ngModel]="formatNum(currentItem.purity)" (ngModelChange)="currentItem.purity = parseNum($event); calculateCurrentItem()" type="text" inputmode="numeric" class="w-full px-2 py-2 border border-slate-300 rounded text-sm font-mono" placeholder="0" />
+      </div>
+      <div class="col-span-2">
+         <label class="text-[10px] font-bold text-slate-400 uppercase">Paid %</label>
+         <input [ngModel]="formatNum(currentItem.purityPaid)" (ngModelChange)="currentItem.purityPaid = parseNum($event); calculateCurrentItem()" type="text" inputmode="numeric" class="w-full px-2 py-2 border border-slate-300 rounded text-sm font-mono" placeholder="0" />
+      </div>
+      
+      <div class="col-span-2">
+         <ng-container *ngIf="currentItem.isBadloItem">
+            <label class="text-[10px] font-bold text-orange-500 uppercase">Chorsa</label>
+            <select [(ngModel)]="currentItem.chorsa" (change)="calculateCurrentItem()" class="w-full px-2 py-2 border border-orange-300 bg-orange-50 rounded text-sm font-mono font-bold text-orange-700 focus:outline-none focus:ring-1 focus:ring-orange-500">
+               <option value="99">99 Chorsa</option>
+               <option value="98">98 Chorsa</option>
+               <option value="96">96 Chorsa</option>
+            </select>
+         </ng-container>
+         <ng-container *ngIf="!currentItem.isBadloItem">
+            <label class="text-[10px] font-bold text-slate-400 uppercase">Rate</label>
+            <input [ngModel]="formatNum(currentItem.rate)" (ngModelChange)="currentItem.rate = parseNum($event); calculateCurrentItem()" placeholder="0" type="text" inputmode="numeric" class="w-full px-2 py-2 border border-slate-300 rounded text-sm font-mono" />
+         </ng-container>
+      </div>
 
-       <div *ngIf="items.length > 0" class="bg-white rounded-lg border border-slate-200 overflow-hidden">
-          <table class="w-full text-left text-xs">
-             <thead class="bg-slate-100 text-[10px] text-slate-500 uppercase font-bold">
-                <tr>
-                  <th class="p-2">Type</th>
-                  <th class="p-2 text-right">Gross</th>
-                  <th class="p-2 text-right">Purity</th>
-                  <th class="p-2 text-right">Paid</th>
-                  <th class="p-2 text-right">Fine</th>
-                  <th class="p-2 text-right">Rate</th>
-                  <th class="p-2 text-right">Eff. Rate</th>
-                  <th class="p-2 text-right">Profit</th>
-                  <th class="p-2 text-right">Amount</th>
-                  <th class="p-2"></th>
-                </tr>
-             </thead>
-             <tbody class="divide-y divide-slate-100">
-                <tr *ngFor="let item of items; let i = index" class="hover:bg-slate-50">
-                   <td class="p-2">
-                      <span *ngIf="item.isBadloItem" class="bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded text-[9px] font-bold border border-orange-200">BADLO</span>
-                      <span *ngIf="!item.isBadloItem" class="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded text-[9px] font-bold border border-blue-100">SALE</span>
-                   </td>
-                   <td class="p-2 text-right font-mono">{{ item.grossWeight }}</td>
-                   <td class="p-2 text-right font-mono text-slate-500">{{ item.purity }}%</td>
-                   <td class="p-2 text-right font-mono text-slate-500">{{ item.purityPaid || item.purity }}%</td>
-                   <td class="p-2 text-right font-mono font-bold text-slate-700">{{ item.fineWeight | number:'1.2-2' }}</td>
-                   <td class="p-2 text-right font-mono">{{ item.isBadloItem ? '---' : item.rate }}</td>
-                   <td class="p-2 text-right font-mono text-slate-500">{{ item.isBadloItem ? '---' : Math.round((item.amount / (item.fineWeight/1000)) || 0) }}</td>
-                   <td class="p-2 text-right font-mono text-[10px]">
-                      <span *ngIf="item.isBadloItem" class="text-orange-600 font-bold">+{{ item.profitWeight | number:'1.2-2' }}g</span>
-                      <span *ngIf="!item.isBadloItem" class="text-green-600">+{{ fmtINR(item.profitAmount) }}</span>
-                   </td>
-                   <td class="p-2 text-right font-mono font-bold" [class.text-slate-300]="item.isBadloItem">{{ item.isBadloItem ? '---' : fmtINR(item.amount) }}</td>
-                   <td class="p-2 text-center"><button (click)="removeItem(i)" class="text-red-400 font-bold hover:text-red-600">×</button></td>
-                </tr>
-             </tbody>
-          </table>
-       </div>
-    </div>
+      <div class="col-span-2">
+         <button (click)="addItem()" class="w-full py-2 bg-blue-600 text-white font-bold text-xs rounded shadow hover:bg-blue-700 transition-colors">ADD</button>
+      </div>
+   </div>
+
+   <div *ngIf="items.length > 0" class="bg-white rounded-lg border border-slate-200 overflow-hidden">
+      <table class="w-full text-left text-xs">
+         <thead class="bg-slate-100 text-[10px] text-slate-500 uppercase font-bold">
+            <tr>
+               <th class="p-2">Type</th>
+               <th class="p-2 text-right">Gross</th>
+               <th class="p-2 text-right">Purity</th>
+               <th class="p-2 text-right">Paid</th>
+               <th class="p-2 text-right">Fine</th>
+               <th class="p-2 text-right">Rate / Chorsa</th>
+               <th class="p-2 text-right">Eff. Rate</th>
+               <th class="p-2 text-right">Profit</th>
+               <th class="p-2 text-right">Amount</th>
+               <th class="p-2"></th>
+            </tr>
+         </thead>
+         <tbody class="divide-y divide-slate-100">
+            <tr *ngFor="let item of items; let i = index" class="hover:bg-slate-50">
+               <td class="p-2">
+                  <span *ngIf="item.isBadloItem" class="bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded text-[9px] font-bold border border-orange-200">BADLO</span>
+                  <span *ngIf="!item.isBadloItem" class="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded text-[9px] font-bold border border-blue-100">SALE</span>
+               </td>
+               <td class="p-2 text-right font-mono">{{ item.grossWeight }}</td>
+               <td class="p-2 text-right font-mono text-slate-500">{{ item.purity }}%</td>
+               <td class="p-2 text-right font-mono text-slate-500">{{ item.purityPaid || item.purity }}%</td>
+               <td class="p-2 text-right font-mono font-bold text-slate-700">{{ item.fineWeight | number:'1.2-2' }}</td>
+               
+               <td class="p-2 text-right font-mono text-xs">
+                  <span *ngIf="item.isBadloItem" class="text-orange-600 font-bold bg-orange-50 px-1 py-0.5 rounded border border-orange-100">{{ item.chorsa }} Chorsa</span>
+                  <span *ngIf="!item.isBadloItem">{{ item.rate }}</span>
+               </td>
+               
+               <td class="p-2 text-right font-mono text-slate-500">{{ item.isBadloItem ? '---' : Math.round((item.amount / (item.fineWeight/1000)) || 0) }}</td>
+               <td class="p-2 text-right font-mono text-[10px]">
+                  <span *ngIf="item.isBadloItem" class="text-orange-600 font-bold">+{{ item.profitWeight | number:'1.2-2' }}g</span>
+                  <span *ngIf="!item.isBadloItem" class="text-green-600">+{{ fmtINR(item.profitAmount) }}</span>
+               </td>
+               <td class="p-2 text-right font-mono font-bold" [class.text-slate-300]="item.isBadloItem">{{ item.isBadloItem ? '---' : fmtINR(item.amount) }}</td>
+               <td class="p-2 text-center"><button (click)="removeItem(i)" class="text-red-400 font-bold hover:text-red-600">×</button></td>
+            </tr>
+         </tbody>
+      </table>
+   </div>
+</div>

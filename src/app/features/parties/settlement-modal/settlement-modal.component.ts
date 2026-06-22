@@ -2,12 +2,6 @@ import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges } from
 import { Party, PartyService, LedgerTransaction } from '../../parties/party.service';
 import { LedgerPrintService } from './ledger-print.service';
 
-interface ReceiptLine {
-  message: string;
-  valueStr: string;
-  isCleared: boolean;
-}
-
 @Component({
   selector: 'app-settlement-modal',
   templateUrl: './settlement-modal.component.html'
@@ -26,14 +20,11 @@ export class SettlementModalComponent implements OnChanges {
   
   txMode: 'RECEIVE' | 'GIVE' = 'RECEIVE';
   
-  settlementStrategy: 'CASCADE' | 'SPECIFIC' | 'AS_IS' = 'CASCADE';
+  settlementStrategy: 'CASCADE' | 'SPECIFIC' | 'AS_IS' = 'AS_IS';
   specificTarget: 'CASH' | 'GOLD' | 'SILVER' = 'CASH';
   cascadePriority: ('CASH' | 'GOLD' | 'SILVER')[] = ['CASH', 'GOLD', 'SILVER'];
 
   activeAssets = { cash: true, gold: true, silver: true };
-  
-  // 🌟 REFACTORED: Structural clean data nodes object array for UI receipt lines mapping
-  calculationAuditTrail: ReceiptLine[] = [];
 
   // 🌟 HEADER INTEGRATION VALUE SYSTEM VARIABLES
   globalRates = {
@@ -137,8 +128,6 @@ export class SettlementModalComponent implements OnChanges {
 
   printStatementPDF(): void {
     if (!this.selectedParty) return;
-    
-    // Executes using your exact printService signature
     this.printService.printLandscapeLedger(
       this.selectedParty, 
       this.transactionHistory
@@ -160,7 +149,6 @@ export class SettlementModalComponent implements OnChanges {
     this.cascadePriority[idxB] = itemA;
   }
 
-  // Gram valuation metrics reading directly from the active live fields inside the header model
   get currentGoldCashValue(): number { 
     if (!this.activeAssets.gold) return 0;
     const ratePerGram = (Number(this.globalRates.gold) || 0) / 10;
@@ -189,7 +177,6 @@ export class SettlementModalComponent implements OnChanges {
       silver: this.selectedParty?.silverBalance || 0
     };
 
-    this.calculationAuditTrail = [];
     if (!this.selectedParty) return state;
 
     const inputCash = this.activeAssets.cash ? (Number(this.assetsBrought.cash) || 0) : 0;
@@ -229,12 +216,6 @@ export class SettlementModalComponent implements OnChanges {
         const chunk = Math.min(availableValueWallet, liability);
         state.cash += chunk;
         availableValueWallet -= chunk;
-        
-        this.calculationAuditTrail.push({
-          message: `Cleared Cash Account Liability`,
-          valueStr: `-₹${chunk.toFixed(0)}`,
-          isCleared: true
-        });
       }
       else if (targetNode === 'GOLD' && state.gold < 0) {
         const liabilityInCash = Math.abs(state.gold) * goldGramRate;
@@ -242,12 +223,6 @@ export class SettlementModalComponent implements OnChanges {
         const resolvedGrams = chunkCash / goldGramRate;
         state.gold += resolvedGrams;
         availableValueWallet -= chunkCash;
-
-        this.calculationAuditTrail.push({
-          message: `Cleared Gold Account Liability`,
-          valueStr: `-${resolvedGrams.toFixed(3)} g`,
-          isCleared: true
-        });
       }
       else if (targetNode === 'SILVER' && state.silver < 0) {
         const liabilityInCash = Math.abs(state.silver) * silverGramRate;
@@ -255,12 +230,6 @@ export class SettlementModalComponent implements OnChanges {
         const resolvedGrams = chunkCash / silverGramRate;
         state.silver += resolvedGrams;
         availableValueWallet -= chunkCash;
-
-        this.calculationAuditTrail.push({
-          message: `Cleared Silver Account Liability`,
-          valueStr: `-${resolvedGrams.toFixed(0)} g`,
-          isCleared: true
-        });
       }
     }
 
@@ -271,31 +240,13 @@ export class SettlementModalComponent implements OnChanges {
         const surplusRatio = availableValueWallet / originalTotalValueBrought;
 
         if (inputCash > 0) {
-          const cashSurplusValue = inputCash * surplusRatio;
-          state.cash += cashSurplusValue;
-          this.calculationAuditTrail.push({
-            message: `Deposited Surplus Overpayment to Cash`,
-            valueStr: `+₹${cashSurplusValue.toFixed(0)}`,
-            isCleared: false
-          });
+          state.cash += inputCash * surplusRatio;
         }
         if (inputGoldGrams > 0) {
-          const goldSurplusGrams = inputGoldGrams * surplusRatio;
-          state.gold += goldSurplusGrams;
-          this.calculationAuditTrail.push({
-            message: `Deposited Surplus Overpayment to Gold`,
-            valueStr: `+${goldSurplusGrams.toFixed(3)} g`,
-            isCleared: false
-          });
+          state.gold += inputGoldGrams * surplusRatio;
         }
         if (inputSilverGrams > 0) {
-          const silverSurplusGrams = inputSilverGrams * surplusRatio;
-          state.silver += silverSurplusGrams;
-          this.calculationAuditTrail.push({
-            message: `Deposited Surplus Overpayment to Silver`,
-            valueStr: `+${silverSurplusGrams.toFixed(0)} g`,
-            isCleared: false
-          });
+          state.silver += inputSilverGrams * surplusRatio;
         }
       }
     }
@@ -356,8 +307,8 @@ export class SettlementModalComponent implements OnChanges {
 
   resetInternalState(): void {
     this.selectedParty = null; this.customerSearchTerm = ''; this.transactionHistory = [];
-    this.calculationAuditTrail = []; this.filterFromDate = ''; this.filterToDate = ''; this.currentPage = 0;
-    this.txMode = 'RECEIVE'; this.settlementStrategy = 'CASCADE';
+    this.filterFromDate = ''; this.filterToDate = ''; this.currentPage = 0;
+    this.txMode = 'RECEIVE'; this.settlementStrategy = 'AS_IS';
     this.activeAssets = { cash: true, gold: true, silver: true };
     this.sandbox = { inputValue: '', mode: 'CASH_TO_METALS', outputResult: '0.00 Metric' };
     this.cascadePriority = ['CASH', 'GOLD', 'SILVER'];

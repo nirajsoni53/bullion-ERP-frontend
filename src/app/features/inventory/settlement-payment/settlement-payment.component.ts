@@ -23,8 +23,23 @@ export class SettlementPaymentComponent {
   @Output() itemSelect = new EventEmitter<any>();
   @Output() amountChange = new EventEmitter<void>();
 
+  // Exposing global utilities safely to the template binding engine
   Math = Math;
-  formatNum(v: any) { return v === null || v === undefined ? '' : v === 0 ? '0' : v.toString(); }
-  parseNum(v: string) { return parseFloat(v.replace(/,/g, '')) || 0; }
-  fmtINR(v: number) { return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(v); }
+
+  formatNum(v: any) { 
+    return v === null || v === undefined ? '' : v === 0 ? '0' : v.toString(); 
+  }
+  
+  parseNum(v: string) { 
+    if (!v) return 0;
+    return parseFloat(v.replace(/,/g, '')) || 0; 
+  }
+  
+  fmtINR(v: number) { 
+    return new Intl.NumberFormat('en-IN', { 
+      style: 'currency', 
+      currency: 'INR', 
+      maximumFractionDigits: 0 
+    }).format(v || 0); 
+  }
 }
