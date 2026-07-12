@@ -17,33 +17,77 @@
                 <span class="text-[10px] text-slate-400 normal-case font-normal">Active Items Found</span>
             </div>
 
-            <div class="grid grid-cols-12 gap-4 items-end">
+            <div class="grid grid-cols-12 gap-3 items-end">
                 <div class="col-span-2">
                     <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Extra (g/kg)</label>
-                    <input [ngModel]="formatNum(badloData.chorsaVariants[key].extraPerKg)" (ngModelChange)="badloData.chorsaVariants[key].extraPerKg = parseNum($event); triggerCalculation.emit()" type="text" inputmode="numeric" class="w-full px-2 py-1.5 border border-orange-200 rounded text-sm font-mono text-center" />
+                    <input [value]="badloData.chorsaVariants[key].extraPerKg || ''" 
+                           (focus)="handleFocus($event)" 
+                           (blur)="handleBlur($event, key, 'extraPerKg')" 
+                           (input)="onTypoInput($event, key, 'extraPerKg')" 
+                           type="text" class="w-full px-2 py-1.5 border border-orange-200 rounded text-sm font-mono text-center" />
                 </div>
+                
                 <div class="col-span-2">
                     <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Round (g)</label>
-                    <input [ngModel]="formatNum(badloData.chorsaVariants[key].rounding)" (ngModelChange)="badloData.chorsaVariants[key].rounding = parseNum($event); triggerCalculation.emit()" type="text" inputmode="numeric" class="w-full px-2 py-1.5 border border-orange-200 rounded text-sm font-mono text-center" placeholder="+/-" />
+                    <div class="flex rounded-md shadow-3xs">
+                        <button type="button" 
+                                (click)="badloData.chorsaVariants[key].roundingSign = (badloData.chorsaVariants[key].roundingSign === 1 ? -1 : 1); triggerCalculation.emit()"
+                                [ngClass]="badloData.chorsaVariants[key].roundingSign === 1 ? 'bg-emerald-500 text-white border-emerald-600' : 'bg-rose-500 text-white border-rose-600'"
+                                class="px-1.5 text-xs font-black rounded-l border-y border-l transition-colors select-none focus:outline-none min-w-[24px]">
+                            {{ badloData.chorsaVariants[key].roundingSign === 1 ? '+' : '-' }}
+                        </button>
+                        <input [value]="badloData.chorsaVariants[key].rounding || ''" 
+                               (focus)="handleFocus($event)" 
+                               (blur)="handleBlur($event, key, 'rounding')" 
+                               (input)="onTypoInput($event, key, 'rounding')" 
+                               type="text" 
+                               placeholder="0.00"
+                               class="w-full px-1.5 py-1.5 border border-orange-200 border-l-0 rounded-r text-sm font-mono text-left focus:outline-none" />
+                    </div>
                 </div>
-                <div class="col-span-2 text-center">
-                    <div class="text-[9px] text-slate-400 uppercase font-bold mb-1">Target Weight</div>
-                    <div class="text-sm font-black font-mono text-slate-800">{{ badloData.chorsaVariants[key].targetChorsaWeight | number:'1.2-2' }}</div>
+
+                <div class="col-span-2 text-center pb-1">
+                    <div class="text-[9px] text-slate-400 uppercase font-bold mb-1">Target Wt</div>
+                    <div class="text-xs font-black font-mono text-slate-800">
+                        {{ formatDisplayNum(badloData.chorsaVariants[key].targetChorsaWeight) }}<span class="text-[9px] font-sans text-slate-400 font-normal ml-0.5">g</span>
+                    </div>
                 </div>
-                <div class="col-span-3">
+
+                <div class="col-span-2">
                     <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Actual Given</label>
-                    <input [ngModel]="formatNum(badloData.chorsaVariants[key].actualChorsaWeight)" (ngModelChange)="badloData.chorsaVariants[key].actualChorsaWeight = parseNum($event); triggerCalculation.emit()" type="text" inputmode="numeric" class="w-full px-2 py-1.5 border border-slate-300 rounded font-mono font-bold text-orange-700" />
+                    <input [value]="badloData.chorsaVariants[key].actualChorsaWeight || ''" 
+                           (focus)="handleFocus($event)" 
+                           (blur)="handleBlur($event, key, 'actualChorsaWeight')" 
+                           (input)="onTypoInput($event, key, 'actualChorsaWeight')" 
+                           type="text" class="w-full px-2 py-1.5 border border-slate-300 rounded font-mono font-bold text-orange-700 placeholder:font-normal" placeholder="0.00" />
                 </div>
-                <div class="col-span-3">
+
+                <div class="col-span-2">
                     <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Diff Rate</label>
-                    <input [ngModel]="formatNum(badloData.chorsaVariants[key].rate)" (ngModelChange)="badloData.chorsaVariants[key].rate = parseNum($event); triggerCalculation.emit()" [disabled]="Math.abs(badloData.chorsaVariants[key].weightDiff) < 0.001" [placeholder]="Math.abs(badloData.chorsaVariants[key].weightDiff) < 0.001 ? 'Locked' : '0'" type="text" inputmode="numeric" class="w-full px-2 py-1.5 border border-slate-300 rounded font-mono disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed" />
+                    <input [value]="formatCurrencyInitial(badloData.chorsaVariants[key].rate)" 
+                           (focus)="handleFocus($event)" 
+                           (blur)="handleBlur($event, key, 'rate')" 
+                           (input)="onTypoInput($event, key, 'rate')" 
+                           [disabled]="badloData.chorsaVariants[key].weightDiff === 0" 
+                           [placeholder]="badloData.chorsaVariants[key].weightDiff === 0 ? 'Locked' : '0'" 
+                           type="text" class="w-full px-2 py-1.5 border border-slate-300 rounded font-mono disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed text-left font-bold" />
+                </div>
+
+                <div class="col-span-2">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Extra Charges</label>
+                    <input [value]="formatCurrencyInitial(badloData.chorsaVariants[key].extraCharges)" 
+                           (focus)="handleFocus($event)" 
+                           (blur)="handleBlur($event, key, 'extraCharges')" 
+                           (input)="onTypoInput($event, key, 'extraCharges')" 
+                           placeholder="0"
+                           type="text" class="w-full px-2 py-1.5 border border-slate-300 rounded font-mono text-left font-bold text-blue-700 placeholder:font-normal" />
                 </div>
 
                 <div class="col-span-12 mt-2 pt-2 border-t border-dashed border-slate-100 flex justify-between items-center text-[11px]">
                     <div>
                         <span class="text-slate-400 font-semibold">Weight Diff: </span>
                         <span class="font-mono font-bold" [class.text-green-600]="badloData.chorsaVariants[key].weightDiff > 0" [class.text-red-600]="badloData.chorsaVariants[key].weightDiff < 0">
-                            {{ badloData.chorsaVariants[key].weightDiff > 0 ? '+' : '' }}{{ badloData.chorsaVariants[key].weightDiff | number:'1.2-2' }}g
+                            {{ badloData.chorsaVariants[key].weightDiff > 0 ? '+' : '' }}{{ formatDisplayNum(badloData.chorsaVariants[key].weightDiff) }}g
                         </span>
                     </div>
                     <div>
@@ -60,7 +104,7 @@
             <div>
                 <div class="text-[9px] text-slate-400 uppercase font-black tracking-wider">Total Variance across Groups</div>
                 <div class="text-sm font-mono font-bold" [class.text-green-400]="badloData.totalWeightDiff > 0" [class.text-red-400]="badloData.totalWeightDiff < 0">
-                    {{ badloData.totalWeightDiff > 0 ? '+' : '' }}{{ badloData.totalWeightDiff | number:'1.2-2' }}g
+                    {{ badloData.totalWeightDiff > 0 ? '+' : '' }}{{ formatDisplayNum(badloData.totalWeightDiff) }}g
                 </div>
             </div>
             <div class="text-right">

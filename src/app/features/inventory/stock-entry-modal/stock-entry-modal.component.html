@@ -1,13 +1,11 @@
 <div *ngIf="isOpen" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
   <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"></div>
 
-  <!-- TOAST -->
   <div *ngIf="toast.show" class="fixed top-6 right-6 z-[200] px-6 py-4 rounded-lg shadow-2xl animate-in fade-in slide-in-from-top-4 flex items-center gap-3" [ngClass]="toast.type === 'error' ? 'bg-red-50 border-l-4 border-red-500 text-red-700' : (toast.type === 'success' ? 'bg-green-50 border-l-4 border-green-500 text-green-700' : 'bg-yellow-50 border-l-4 border-yellow-500 text-yellow-700')">
     <span class="font-bold text-sm">{{ toast.message }}</span>
     <button (click)="toast.show = false" class="ml-2 font-bold opacity-60 hover:opacity-100">×</button>
   </div>
 
-  <!-- CONFIRMATION -->
   <div *ngIf="confirmation.show" class="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
      <div class="bg-white rounded-xl shadow-2xl p-6 w-96 border border-slate-100">
         <h3 class="text-lg font-bold text-slate-800 mb-2">Confirmation</h3>
@@ -19,10 +17,8 @@
      </div>
   </div>
 
-  <!-- MAIN MODAL -->
   <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col max-h-[95vh] z-[101]">
     
-    <!-- HEADER -->
     <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-20">
       <div>
         <h3 class="text-lg font-black text-slate-800 tracking-tight">Order Entry</h3>
@@ -37,14 +33,13 @@
       </div>
     </div>
 
-    <!-- BODY -->
     <div class="overflow-y-auto custom-scrollbar flex-1 bg-slate-50">
-      
+
       <app-party-order-info
         [formData]="formData"
         [selectedParty]="selectedParty"
         [filteredParties]="filteredParties"
-        [isSearchOpen]="isPartySearchOpen"
+        [(isSearchOpen)]="isPartySearchOpen" 
         [(isDescriptionEditable)]="isDescriptionEditable" 
         (search)="onSearchInput($event)"
         (select)="selectParty($event)"
@@ -53,14 +48,30 @@
         (focusSearch)="isPartySearchOpen = true">
       </app-party-order-info>
 
-      <app-live-summary 
-        [formData]="formData">
-      </app-live-summary>
+        <app-live-summary
+          [formData]="formData">
+        </app-live-summary>
 
-      <app-item-entry
-        [items]="items"
-        (listChanged)="recalculateGlobals()">
-      </app-item-entry>
+        <app-item-entry
+          [items]="items"
+          (listChanged)="recalculateGlobals()">
+        </app-item-entry>
+
+        <div class="mx-6 my-4 bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex justify-between items-center gap-4">
+            <div class="max-w-xl">
+                <span class="text-xs font-black text-slate-700 uppercase tracking-wide block">Global Extra / Making Charges</span>
+                <span class="text-[11px] text-slate-400 block mt-0.5">Input custom standalone premiums or design charges here. This balance is treated strictly as a <strong>Receivable asset</strong>.</span>
+            </div>
+            <div class="w-64 relative rounded-md shadow-2xs">
+                <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-xs font-bold text-slate-400">₹</span>
+                <input type="text"
+                       [value]="formData.globalExtraCharges ? (formData.globalExtraCharges | number:'1.0-0':'en-IN') : ''"
+                       (input)="onGlobalChargesInput($event)"
+                       (blur)="onGlobalChargesBlur($event)"
+                       placeholder="0"
+                       class="w-full pl-6 pr-3 py-1.5 border border-slate-300 rounded text-sm font-mono font-bold text-blue-700 text-right focus:outline-none focus:border-blue-500 placeholder:font-normal" />
+            </div>
+        </div>
 
       <app-badlo-calculator
         [(isBadloEnabled)]="isBadloEnabled"
@@ -69,25 +80,24 @@
         (triggerCalculation)="recalculateGlobals()">
       </app-badlo-calculator>
 
-      <app-settlement-payment
-        [(enableItemSettlement)]="enableItemSettlement"
-        [unsettledHistory]="unsettledHistory"
-        [selectedParty]="selectedParty"
-        [formData]="formData"
-        [totalSelectedPending]="totalSelectedPending"
-        [netPayableFinal]="netPayableFinal"
-        [totalBillAmount]="formData.totalBillAmount"
-        [totalSettlementSelected]="totalSettlementSelected"
-        [pendingBalanceFinal]="pendingBalanceFinal"
-        (toggleSettlement)="toggleSettlement()"
-        (toggleSelectAll)="toggleSelectAll($event)"
-        (itemSelect)="onItemSelect($event)"
-        (amountChange)="recalculateGlobals()">
-      </app-settlement-payment>
+        <app-settlement-payment
+          [(enableItemSettlement)]="enableItemSettlement"
+          [unsettledHistory]="unsettledHistory"
+          [selectedParty]="selectedParty"
+          [formData]="formData"
+          [badloData]="badloData"
+          [totalSelectedPending]="totalSelectedPending"
+          [netPayableFinal]="netPayableFinal"
+          [totalBillAmount]="formData.totalBillAmount"
+          [(totalSettlementSelected)]="totalSettlementSelected" [pendingBalanceFinal]="pendingBalanceFinal"
+          (toggleSettlement)="toggleSettlement()"
+          (toggleSelectAll)="toggleSelectAll($event)"
+          (itemSelect)="onItemSelect($event)"
+          (amountChange)="recalculateGlobals()">
+        </app-settlement-payment>
 
     </div>
 
-    <!-- FOOTER -->
     <div class="px-6 py-4 bg-white border-t border-slate-100 flex justify-end gap-3 sticky bottom-0 z-20">
        <button (click)="close.emit()" class="px-6 py-2.5 text-slate-600 font-bold text-sm hover:bg-slate-100 rounded-lg">Cancel</button>
        <button (click)="onSubmit()" class="px-8 py-2.5 bg-blue-600 text-white font-bold text-sm rounded-lg shadow-lg hover:bg-blue-700">Save Order</button>

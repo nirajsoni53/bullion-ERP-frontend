@@ -7,18 +7,19 @@ import { Party } from '../../parties/party.service';
   styleUrl: './party-order-info.component.scss'
 })
 export class PartyOrderInfoComponent {
- @Input() formData: any;
+  @Input() formData: any;
   @Input() selectedParty: Party | null = null;
   @Input() filteredParties: Party[] = [];
   @Input() isSearchOpen = false;
-  @Input() isDescriptionEditable = false; // Input for parent state
+  @Input() isDescriptionEditable = false;
 
   @Output() search = new EventEmitter<string>();
   @Output() select = new EventEmitter<Party>();
   @Output() unselect = new EventEmitter<void>();
   @Output() addParty = new EventEmitter<void>();
   @Output() focusSearch = new EventEmitter<void>();
-  @Output() isDescriptionEditableChange = new EventEmitter<boolean>(); // Output for two-way binding
+  @Output() isDescriptionEditableChange = new EventEmitter<boolean>();
+  @Output() isSearchOpenChange = new EventEmitter<boolean>(); // Dynamic two-way link output wrapper
 
   Math = Math;
 
@@ -31,6 +32,10 @@ export class PartyOrderInfoComponent {
   }
 
   fmtINR(v: number) {
-    return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(v);
+    return new Intl.NumberFormat('en-IN', { 
+      style: 'currency', 
+      currency: 'INR', 
+      maximumFractionDigits: 0 
+    }).format(v || 0);
   }
 }

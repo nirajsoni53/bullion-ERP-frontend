@@ -19,8 +19,13 @@
                         <button (click)="unselect.emit()" class="px-2 py-1 text-[10px] font-bold bg-slate-100 text-slate-500 rounded hover:bg-slate-200">Change</button>
                     </div>
 
+                    <div *ngIf="isSearchOpen && filteredParties.length > 0" 
+                         class="fixed inset-0 z-40 bg-transparent cursor-default"
+                         (click)="isSearchOpen = false; isSearchOpenChange.emit(false)">
+                    </div>
+
                     <div *ngIf="isSearchOpen && filteredParties.length > 0" class="absolute z-50 mt-1 w-full bg-white rounded-lg shadow-xl border border-slate-200 max-h-60 overflow-y-auto">
-                        <div *ngFor="let p of filteredParties" (mousedown)="$event.preventDefault()" (click)="select.emit(p)" class="px-4 py-2.5 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0 flex justify-between items-center group">
+                        <div *ngFor="let p of filteredParties" (mousedown)="$event.preventDefault()" (click)="select.emit(p); isSearchOpen = false; isSearchOpenChange.emit(false)" class="px-4 py-2.5 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0 flex justify-between items-center group">
                             <div>
                                 <div class="font-bold text-slate-800 text-sm group-hover:text-blue-700">
                                     {{ p.name }} <span *ngIf="p.shopName" class="text-slate-400 font-normal ml-1">({{ p.shopName }})</span>
@@ -50,7 +55,7 @@
                 <div class="p-2.5 bg-white border rounded-xl shadow-3xs flex flex-col justify-between transition-all" 
                      [ngClass]="selectedParty.cashBalance < 0 ? 'border-rose-200 bg-rose-50/10' : 'border-emerald-200 bg-emerald-50/10'">
                     <div class="flex justify-between items-center">
-                        <span class="text-[9px] font-black uppercase tracking-wider text-slate-400">💵 Cash Account</span>
+                        <span class="text-[9px] font-black uppercase tracking-wider text-slate-400">💵 Cash Balance</span>
                         <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-sm font-sans tracking-wide" 
                               [ngClass]="selectedParty.cashBalance < 0 ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'">
                             {{ selectedParty.cashBalance < 0 ? 'Receivable (Lena)' : 'Payable (Dena)' }}
@@ -64,7 +69,7 @@
                 <div class="p-2.5 bg-white border rounded-xl shadow-3xs flex flex-col justify-between transition-all" 
                      [ngClass]="(selectedParty.goldBalance || 0) < 0 ? 'border-rose-200 bg-rose-50/10' : 'border-emerald-200 bg-emerald-50/10'">
                     <div class="flex justify-between items-center">
-                        <span class="text-[9px] font-black uppercase tracking-wider text-slate-400">🏆 Gold Book</span>
+                        <span class="text-[9px] font-black uppercase tracking-wider text-slate-400">🏆 Gold Balance</span>
                         <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-sm font-sans tracking-wide" 
                               [ngClass]="(selectedParty.goldBalance || 0) < 0 ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'">
                             {{ (selectedParty.goldBalance || 0) < 0 ? 'Receivable (Lena)' : 'Payable (Dena)' }}
@@ -78,7 +83,7 @@
                 <div class="p-2.5 bg-white border rounded-xl shadow-3xs flex flex-col justify-between transition-all" 
                      [ngClass]="(selectedParty.silverBalance || 0) < 0 ? 'border-rose-200 bg-rose-50/10' : 'border-emerald-200 bg-emerald-50/10'">
                     <div class="flex justify-between items-center">
-                        <span class="text-[9px] font-black uppercase tracking-wider text-slate-400">🥈 Silver Book</span>
+                        <span class="text-[9px] font-black uppercase tracking-wider text-slate-400">🥈 Silver Balance</span>
                         <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-sm font-sans tracking-wide" 
                               [ngClass]="(selectedParty.silverBalance || 0) < 0 ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'">
                             {{ (selectedParty.silverBalance || 0) < 0 ? 'Receivable (Lena)' : 'Payable (Dena)' }}

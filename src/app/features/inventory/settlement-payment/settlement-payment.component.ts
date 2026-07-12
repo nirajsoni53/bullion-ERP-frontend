@@ -1,4 +1,5 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Party } from '../../parties/party.service';
 
 @Component({
   selector: 'app-settlement-payment',
@@ -8,8 +9,9 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 export class SettlementPaymentComponent {
   @Input() enableItemSettlement = false;
   @Input() unsettledHistory: any[] = [];
-  @Input() selectedParty: any;
+  @Input() selectedParty: Party | null = null; // Imports interface properties dynamically
   @Input() formData: any;
+  @Input() badloData: any;
   
   @Input() totalSelectedPending = 0;
   @Input() netPayableFinal = 0;
@@ -22,8 +24,8 @@ export class SettlementPaymentComponent {
   @Output() toggleSelectAll = new EventEmitter<boolean>();
   @Output() itemSelect = new EventEmitter<any>();
   @Output() amountChange = new EventEmitter<void>();
+  @Output() totalSettlementSelectedChange = new EventEmitter<number>(); // Emits manual balance overrides
 
-  // Exposing global utilities safely to the template binding engine
   Math = Math;
 
   formatNum(v: any) { 

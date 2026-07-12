@@ -32,21 +32,22 @@ export class StockEntryModalComponent implements OnInit, OnChanges {
     goldWeightPending: 0,
     silverWeightPending: 0,
     goldClosingBalance: 0,
-    silverClosingBalance: 0
+    silverClosingBalance: 0,
+    
+    // ADDED: Global Extra Charges initialized within primary component state form structure
+    globalExtraCharges: 0 
   };
 
-  // Explicitly type the Toast state structure
   toast: {
     show: boolean;
     message: string;
-    type: 'success' | 'error' | 'warning'; // restricts to valid semantic types
+    type: 'success' | 'error' | 'warning';
   } = { 
     show: false, 
     message: '', 
     type: 'error' 
   };
 
-  // Explicitly type the Confirmation Modal structure
   confirmation: {
     show: boolean;
     message: string;
@@ -55,7 +56,6 @@ export class StockEntryModalComponent implements OnInit, OnChanges {
     message: '' 
   };
 
-  // Upgraded: Structure initialization to handle dynamic nested Chorsa configurations
   badloData: any = { 
     totalWeightDiff: 0, 
     totalNetAmount: 0, 
@@ -140,7 +140,6 @@ export class StockEntryModalComponent implements OnInit, OnChanges {
     });
   }
 
-  // --- SETTLEMENT WRAPPERS ---
   toggleSettlement() {
     if (!this.selectedParty) {
       this.showToast("Please select a party first.", 'error');
@@ -193,7 +192,6 @@ export class StockEntryModalComponent implements OnInit, OnChanges {
       this.formData.description = gross > 0 ? `RUPA (${gross.toFixed(2)}g)` : '';
     }
 
-    // Upgraded: Connect to dynamic multi-variant calculator engine
     if (this.isBadloEnabled) {
       this.calculateBadlo();
     } else {
@@ -202,9 +200,12 @@ export class StockEntryModalComponent implements OnInit, OnChanges {
       this.badloData.chorsaVariants = {};
     }
 
-    // Connect aggregated totals across all active variations to cash calculations
+    // UPDATED FINANCIAL RULES MATRIX:
+    // 1. totalBillAmount contains stock + badlo variance calculations
     this.formData.totalBillAmount = this.formData.totalStockAmount + (this.isBadloEnabled ? this.badloData.totalNetAmount : 0);
-    this.netPayableFinal = this.formData.totalBillAmount + this.totalSettlementSelected;
+    
+    // 2. globalExtraCharges is a RECEIVABLE (reduces our payable outward or adds to our collection balance)
+    this.netPayableFinal = this.formData.totalBillAmount + this.totalSettlementSelected - (this.formData.globalExtraCharges || 0);
     this.pendingBalanceFinal = this.netPayableFinal - (this.formData.paidAmount || 0);
 
     const baseGoldPending = this.formData.totalGoldBillWeight - this.formData.goldWeightSettledSelected;
@@ -218,7 +219,6 @@ export class StockEntryModalComponent implements OnInit, OnChanges {
     this.formData.silverClosingBalance = openingSilver + baseSilverPending - (this.formData.paidSilverGrams || 0);
   }
 
-  // Upgraded: Complete refactoring to calculate dynamically per variant without mutations
   calculateBadlo() {
     const badloItems = this.items.filter(i => i.isBadloItem);
     
@@ -234,14 +234,11 @@ export class StockEntryModalComponent implements OnInit, OnChanges {
       return; 
     }
 
-    // Preserve previously typed inputs to prevent UI focus resets
     const existingVariants = { ...this.badloData.chorsaVariants };
-    
     let masterTotalWeightDiff = 0;
     let masterTotalNetAmount = 0;
     const workingVariants: any = {};
 
-    // Group active entries by chorsa code
     badloItems.forEach(item => {
       const chorsaKey = item.chorsa || '99';
       if (!workingVariants[chorsaKey]) {
@@ -249,8 +246,11 @@ export class StockEntryModalComponent implements OnInit, OnChanges {
         workingVariants[chorsaKey] = {
           extraPerKg: oldGroup.extraPerKg !== undefined ? oldGroup.extraPerKg : 0,
           rounding: oldGroup.rounding !== undefined ? oldGroup.rounding : 0,
+          roundingSign: oldGroup.roundingSign !== undefined ? oldGroup.roundingSign : -1,
           actualChorsaWeight: oldGroup.actualChorsaWeight !== undefined ? oldGroup.actualChorsaWeight : 0,
           rate: oldGroup.rate !== undefined ? oldGroup.rate : 0,
+          // UPDATED: Sub-charges field inside variant corrected to act as a direct RECEIVABLE offset
+          extraCharges: oldGroup.extraCharges !== undefined ? oldGroup.extraCharges : 0, 
           sumFineWeight: 0,
           targetChorsaWeight: 0,
           weightDiff: 0,
@@ -260,21 +260,35 @@ export class StockEntryModalComponent implements OnInit, OnChanges {
       workingVariants[chorsaKey].sumFineWeight += item.fineWeight || 0;
     });
 
-    // Execute formula maps dynamically for each variation group
     Object.keys(workingVariants).forEach(key => {
       const group = workingVariants[key];
-      const extraGrams = (group.sumFineWeight / 1000) * group.extraPerKg;
       
-      group.targetChorsaWeight = group.sumFineWeight + extraGrams + group.rounding;
-      group.weightDiff = group.actualChorsaWeight - group.targetChorsaWeight;
-
-      if (Math.abs(group.weightDiff) < 0.001) {
+      const baseFineWeight = Number(group.sumFineWeight.toFixed(2));
+      const extraGrams = Number(((baseFineWeight / 1000) * group.extraPerKg).toFixed(2));
+      
+      const roundingOffset = Number((group.rounding * group.roundingSign).toFixed(2));
+      let target = baseFineWeight + extraGrams + roundingOffset;
+      
+      if (Math.abs(target - Math.round(target)) < 0.01) {
+        target = Math.round(target);
+      } else {
+        target = Number(target.toFixed(2));
+      }
+      
+      group.targetChorsaWeight = target;
+      let diff = Number((group.actualChorsaWeight - group.targetChorsaWeight).toFixed(2));
+      
+      if (Math.abs(diff) < 0.01) {
         group.weightDiff = 0;
-        group.netAmount = 0;
+        // FINANCIAL CORRECTION: extraCharges is Receivable. If weight variance is settled, 
+        // we owe -group.extraCharges back to calculation pool (making final amount receivable).
+        group.netAmount = Math.round(-1 * (group.extraCharges || 0));
         group.rate = 0;
       } else {
-        // Multiplied by -1 to mirror operational accounting (paying vs receiving balance)
-        group.netAmount = -1 * (group.weightDiff / 1000) * (group.rate || 0);
+        group.weightDiff = diff;
+        const valueDiffAmount = -1 * (group.weightDiff / 1000) * group.rate;
+        // FINANCIAL CORRECTION: We subtract group.extraCharges because it's a credit receivable for us.
+        group.netAmount = Math.round(valueDiffAmount - (group.extraCharges || 0));
       }
 
       masterTotalWeightDiff += group.weightDiff;
@@ -282,7 +296,7 @@ export class StockEntryModalComponent implements OnInit, OnChanges {
     });
 
     this.badloData = {
-      totalWeightDiff: masterTotalWeightDiff,
+      totalWeightDiff: Number(masterTotalWeightDiff.toFixed(2)),
       totalNetAmount: masterTotalNetAmount,
       chorsaVariants: workingVariants
     };
@@ -315,17 +329,43 @@ export class StockEntryModalComponent implements OnInit, OnChanges {
     this.recalculateGlobals();
   }
 
+  // ADDED: Live typing comma mask for Global Charges inputs
+  onGlobalChargesInput(event: any) {
+    const rawValue = event.target.value.replace(/,/g, '');
+    const parsed = parseFloat(rawValue);
+    if (isNaN(parsed)) {
+      this.formData.globalExtraCharges = 0;
+      this.recalculateGlobals();
+      return;
+    }
+    event.target.value = new Intl.NumberFormat('en-IN').format(Math.floor(parsed));
+    this.formData.globalExtraCharges = parsed;
+    this.recalculateGlobals();
+  }
+
+  onGlobalChargesBlur(event: any) {
+    const rawValue = event.target.value.replace(/,/g, '');
+    if (rawValue === '' || isNaN(parseFloat(rawValue))) {
+      this.formData.globalExtraCharges = 0;
+      event.target.value = '';
+    } else {
+      this.formData.globalExtraCharges = parseFloat(rawValue);
+      event.target.value = new Intl.NumberFormat('en-IN').format(this.formData.globalExtraCharges);
+    }
+    this.recalculateGlobals();
+  }
+
   onSubmit() {
-     if (!this.formData.partyId) { this.showToast('Select party', 'error'); return; }
-     if (this.items.length === 0) { this.showToast('Add items', 'error'); return; }
-     
-     const hasPayments = this.formData.paidAmount || this.formData.paidGoldGrams || this.formData.paidSilverGrams;
-     if (!hasPayments) {
-        this.confirmation.message = "All counter payment entries are empty. Save as 0?"; 
-        this.confirmation.show = true; 
-        return;
-     }
-     this.finalizeSave();
+       if (!this.formData.partyId) { this.showToast('Select party', 'error'); return; }
+       if (this.items.length === 0) { this.showToast('Add items', 'error'); return; }
+       
+       const hasPayments = this.formData.paidAmount || this.formData.paidGoldGrams || this.formData.paidSilverGrams;
+       if (!hasPayments) {
+          this.confirmation.message = "All counter payment entries are empty. Save as 0?"; 
+          this.confirmation.show = true; 
+          return;
+       }
+       this.finalizeSave();
   }
   
   finalizeSave() {
@@ -349,7 +389,8 @@ export class StockEntryModalComponent implements OnInit, OnChanges {
       partyId: null, partyName: '', paidAmount: null, paidGoldGrams: null, paidSilverGrams: null,
       totalGrossWeight: 0, totalFineWeight: 0, description: '',
       totalGoldBillWeight: 0, totalSilverBillWeight: 0, goldWeightSettledSelected: 0, silverWeightSettledSelected: 0,
-      goldWeightPending: 0, silverWeightPending: 0, goldClosingBalance: 0, silverClosingBalance: 0
+      goldWeightPending: 0, silverWeightPending: 0, goldClosingBalance: 0, silverClosingBalance: 0,
+      globalExtraCharges: 0 // Reset property container
     }; 
     this.badloData = { totalWeightDiff: 0, totalNetAmount: 0, chorsaVariants: {} };
     this.recalculateGlobals();
@@ -357,4 +398,8 @@ export class StockEntryModalComponent implements OnInit, OnChanges {
 
   showToast(msg: string, type: any) { this.toast = {show: true, message: msg, type}; setTimeout(() => this.toast.show = false, 3000); }
   closeConfirmation(c: boolean) { this.confirmation.show = false; if(c) { this.formData.paidAmount = 0; this.finalizeSave(); } }
+  
+  fmtINR(v: number) { 
+    return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(Math.round(v || 0)); 
+  }
 }

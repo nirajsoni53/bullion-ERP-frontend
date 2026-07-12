@@ -1,84 +1,108 @@
-<div class="p-6 bg-slate-50">
+<div *ngIf="selectedParty" class="p-6 bg-slate-50 border-t border-slate-100">
     <h4 class="text-xs font-black text-slate-500 uppercase mb-3 flex items-center gap-2">
         <span class="w-5 h-5 bg-slate-200 rounded-full flex items-center justify-center text-slate-600">5</span> Settlement & Payment
     </h4>
-    
+
     <div class="mb-4 flex items-center gap-3">
         <label class="flex items-center gap-2 cursor-pointer bg-white px-4 py-2 rounded-lg border border-slate-200" [class.opacity-50]="!selectedParty">
             <input type="checkbox" [ngModel]="enableItemSettlement" (ngModelChange)="enableItemSettlementChange.emit($event); toggleSettlement.emit()" [disabled]="!selectedParty" class="w-4 h-4 text-blue-600 rounded" />
-            <span class="text-xs font-bold text-slate-700">Settle Previous Items</span>
+            <span class="text-xs font-bold text-slate-700">Settle Previous Ledger Account Balances</span>
         </label>
     </div>
 
-    <div *ngIf="enableItemSettlement && unsettledHistory.length > 0" class="mb-5 bg-white rounded-lg border border-slate-200 overflow-hidden">
-        <div class="max-h-52 overflow-y-auto">
-            <table class="w-full text-left text-xs">
-                <thead class="bg-slate-50 text-[10px] text-slate-400 uppercase sticky top-0 border-b border-slate-200 z-10">
-                    <tr>
-                        <th class="p-2 w-8"><input type="checkbox" (change)="toggleSelectAll.emit($any($event.target).checked)" class="w-4 h-4 text-blue-600 rounded cursor-pointer" /></th>
-                        <th class="p-2">Item / Type</th>
-                        <th class="p-2 text-right">Pending</th>
-                        <th class="p-2 text-right w-28">Settle</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100">
-                    <tr *ngFor="let item of unsettledHistory" [ngClass]="item.isSelected ? 'bg-blue-50/40' : ''">
-                        <td class="p-2"><input type="checkbox" [(ngModel)]="item.isSelected" (change)="itemSelect.emit(item)" class="w-4 h-4 text-blue-600 rounded cursor-pointer" /></td>
-                        <td class="p-2">
-                            <div class="flex items-center gap-2">
-                                <span class="font-bold text-slate-700">{{ item.description }}</span>
-                                <span class="text-[8px] font-black px-1 rounded-sm uppercase tracking-wide" 
-                                      [ngClass]="item.type === 'GOLD' ? 'bg-amber-100 text-amber-800' : (item.type === 'SILVER' ? 'bg-slate-200 text-slate-800' : 'bg-emerald-100 text-emerald-800')">
-                                    {{ item.type || 'CASH' }}
-                                </span>
-                            </div>
-                            <div class="text-[10px] text-slate-400">{{ item.date | date:'dd MMM yyyy' }}</div>
-                        </td>
-                        <td class="p-2 text-right font-mono font-bold" [ngClass]="item.pendingAmount < 0 ? 'text-rose-600' : 'text-emerald-600'">
-                            {{ item.pendingAmount < 0 ? '-' : '+' }}
-                            <ng-container [ngSwitch]="item.type">
-                                <span *ngSwitchCase="'GOLD'">{{ Math.abs(item.pendingAmount).toFixed(3) }}g</span>
-                                <span *ngSwitchCase="'SILVER'">{{ (Math.abs(item.pendingAmount) / 1000).toFixed(3) }}kg</span>
-                                <span *ngSwitchDefault>{{ fmtINR(Math.abs(item.pendingAmount)) }}</span>
-                            </ng-container>
-                        </td>
-                        <td class="p-2">
-                            <input *ngIf="item.isSelected" [ngModel]="formatNum(item.settleAmount)" (ngModelChange)="item.settleAmount = parseNum($event); itemSelect.emit(item)" type="text" inputmode="numeric" class="w-full px-1 py-1 border border-slate-300 rounded text-xs text-right font-mono font-bold" />
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+    <div *ngIf="enableItemSettlement && selectedParty" class="mb-5 grid grid-cols-3 gap-4 animate-in fade-in slide-in-from-top-2">
+        
+        <div class="bg-white rounded-xl border border-slate-200 p-3 shadow-xs flex flex-col justify-between">
+            <div>
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-wide">Cash Balance</span>
+                    <span class="text-[8px] font-black bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded uppercase">Currency</span>
+                </div>
+                <div class="text-sm font-bold font-mono text-slate-700" [class.text-rose-600]="selectedParty.cashBalance < 0">
+                    Current: {{ fmtINR(selectedParty.cashBalance || 0) }}
+                </div>
+            </div>
+            <div class="mt-3">
+                <label class="block text-[9px] font-bold text-slate-400 uppercase mb-0.5">Settle Cash Amount (Adjustment)</label>
+                <input [ngModel]="formatNum(totalSettlementSelected)" (ngModelChange)="totalSettlementSelectedChange.emit(parseNum($event)); amountChange.emit()" type="text" inputmode="numeric" placeholder="₹0" class="w-full px-2 py-1 border border-slate-200 rounded font-mono font-bold text-xs text-right bg-slate-50/50 focus:bg-white text-blue-600" />
+            </div>
         </div>
-        <div class="bg-slate-50 px-3 py-2 border-t border-slate-200 flex justify-between items-center">
-            <span class="text-[10px] font-bold text-slate-500 uppercase">Selected Outstanding (Valuation Total)</span>
-            <span class="text-xs font-black font-mono" [ngClass]="totalSelectedPending < 0 ? 'text-rose-600' : 'text-emerald-600'">
-                {{ totalSelectedPending < 0 ? '-' : '+' }}{{ fmtINR(Math.abs(totalSelectedPending)) }}
-            </span>
+
+        <div class="bg-white rounded-xl border border-slate-200 p-3 shadow-xs flex flex-col justify-between">
+            <div>
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-wide">Gold Balance</span>
+                    <span class="text-[8px] font-black bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded uppercase">Metal</span>
+                </div>
+                <div class="text-sm font-bold font-mono text-slate-700">
+                    Current: {{ (selectedParty.goldBalance || 0).toFixed(3) }}g
+                </div>
+            </div>
+            <div class="mt-3">
+                <label class="block text-[9px] font-bold text-slate-400 uppercase mb-0.5">Settle Grams</label>
+                <input [ngModel]="formatNum(formData.goldWeightSettledSelected)" (ngModelChange)="formData.goldWeightSettledSelected = parseNum($event); amountChange.emit()" type="text" inputmode="numeric" placeholder="0.000" class="w-full px-2 py-1 border border-slate-200 rounded font-mono font-bold text-xs text-right bg-slate-50/50 focus:bg-white" />
+            </div>
         </div>
+
+        <div class="bg-white rounded-xl border border-slate-200 p-3 shadow-xs flex flex-col justify-between">
+            <div>
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-wide">Silver Balance</span>
+                    <span class="text-[8px] font-black bg-slate-200 text-slate-800 px-1.5 py-0.5 rounded uppercase">Metal</span>
+                </div>
+                <div class="text-sm font-bold font-mono text-slate-700">
+                    Current: {{ ((selectedParty.silverBalance || 0) / 1000).toFixed(3) }}kg
+                </div>
+            </div>
+            <div class="mt-3">
+                <label class="block text-[9px] font-bold text-slate-400 uppercase mb-0.5">Settle Grams</label>
+                <input [ngModel]="formatNum(formData.silverWeightSettledSelected)" (ngModelChange)="formData.silverWeightSettledSelected = parseNum($event); amountChange.emit()" type="text" inputmode="numeric" placeholder="0.000" class="w-full px-2 py-1 border border-slate-200 rounded font-mono font-bold text-xs text-right bg-slate-50/50 focus:bg-white" />
+            </div>
+        </div>
+
     </div>
 
-    <div class="grid grid-cols-2 gap-6 items-end">
-        <div class="p-4 bg-white rounded-xl border border-slate-300 shadow-sm">
+    <div class="grid grid-cols-12 gap-4 items-end">
+        
+        <div class="col-span-7 p-4 bg-white rounded-xl border border-slate-300 shadow-sm">
             <div class="text-[10px] font-bold text-slate-400 uppercase mb-1">Net Payable Amount</div>
-            <div class="text-2xl font-black font-mono" [ngClass]="netPayableFinal >= 0 ? 'text-rose-600' : 'text-emerald-600'">
-                {{ netPayableFinal >= 0 ? '-' : '+' }}{{ fmtINR(Math.abs(netPayableFinal)) }} 
-                <span class="text-xs font-normal ml-1 text-slate-500">{{ netPayableFinal >= 0 ? '(You Pay)' : '(You Rec)' }}</span>
+            <div class="text-2xl font-black font-mono mb-2" [ngClass]="netPayableFinal >= 0 ? 'text-rose-600' : 'text-emerald-600'">
+                {{ netPayableFinal >= 0 ? '' : '-' }}{{ fmtINR(Math.abs(netPayableFinal)) }} 
+                <span class="text-xs font-normal ml-1 text-slate-500">{{ netPayableFinal >= 0 ? '(You Pay / Due)' : '(You Receive / Credit)' }}</span>
             </div>
-            <div class="text-[10px] text-slate-400 mt-1 flex justify-between">
-                <span>Bill: {{ fmtINR(totalBillAmount) }}</span>
-                <span>Adj: {{ totalSettlementSelected > 0 ? '+' : '' }}{{ fmtINR(totalSettlementSelected) }}</span>
+            
+            <div class="border-t border-dashed border-slate-100 pt-2 space-y-1 text-[11px] font-medium text-slate-500">
+                <div class="flex justify-between">
+                    <span>1. Department Stock Goods Amount:</span>
+                    <span class="font-mono text-slate-700 font-bold">{{ fmtINR(formData.totalStockAmount) }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>2. Department Badlo Variance Cash Amount:</span>
+                    <span class="font-mono font-bold" [class.text-red-600]="badloData?.totalNetAmount > 0" [class.text-green-600]="badloData?.totalNetAmount < 0">
+                        {{ badloData?.totalNetAmount > 0 ? '+' : '' }}{{ fmtINR(badloData?.totalNetAmount || 0) }}
+                    </span>
+                </div>
+                <div class="flex justify-between border-t border-slate-100 pt-1 font-semibold text-slate-700">
+                    <span>Combined Active Invoice Bill Total:</span>
+                    <span class="font-mono font-black">{{ fmtINR(totalBillAmount) }}</span>
+                </div>
+                <div class="flex justify-between text-blue-600 bg-blue-50/50 p-1 rounded mt-1">
+                    <span>3. Past Account Ledger Selected Adjustments:</span>
+                    <span class="font-mono font-bold">{{ totalSettlementSelected >= 0 ? '+' : '' }}{{ fmtINR(totalSettlementSelected) }}</span>
+                </div>
             </div>
         </div>
-        <div>
-            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Paid / Received</label>
-            <input [ngModel]="formatNum(formData.paidAmount)" (ngModelChange)="formData.paidAmount = parseNum($event); amountChange.emit()" [ngClass]="netPayableFinal >= 0 ? 'text-rose-700' : 'text-emerald-700'" type="text" inputmode="numeric" placeholder="0" class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-xl font-mono font-bold bg-white" />
+
+        <div class="col-span-5">
+            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Paid / Received At Counter</label>
+            <input [ngModel]="formatNum(formData.paidAmount)" (ngModelChange)="formData.paidAmount = parseNum($event); amountChange.emit()" [ngClass]="netPayableFinal >= 0 ? 'text-rose-700' : 'text-emerald-700'" type="text" inputmode="numeric" placeholder="0" class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-xl font-mono font-bold bg-white shadow-sm" />
         </div>
     </div>
     
-    <div class="mt-4 text-right">
-        <span class="text-xs text-slate-400 font-medium">Closing Balance: </span>
-        <span class="text-lg font-black font-mono" [ngClass]="Math.abs(pendingBalanceFinal) < 1 ? 'text-slate-400' : (pendingBalanceFinal < 0 ? 'text-rose-600' : 'text-emerald-600')">
-            {{ Math.abs(pendingBalanceFinal) < 1 ? 'Settled' : ((pendingBalanceFinal > 0 ? '+' : '-') + fmtINR(Math.abs(pendingBalanceFinal))) }}
+    <div class="mt-4 bg-white px-4 py-2 rounded-lg border border-slate-100 flex justify-between items-center shadow-xs">
+        <span class="text-xs text-slate-400 font-medium">Remaining Closing Balance (After Payment):</span>
+        <span class="text-lg font-black font-mono" [ngClass]="Math.abs(pendingBalanceFinal) < 1 ? 'text-emerald-500' : (pendingBalanceFinal > 0 ? 'text-rose-600' : 'text-emerald-600')">
+            {{ Math.abs(pendingBalanceFinal) < 1 ? 'Fully Settled (0)' : ((pendingBalanceFinal > 0 ? 'Payable: ' : 'Receivable: ') + fmtINR(Math.abs(pendingBalanceFinal))) }}
         </span>
     </div>
 </div>
