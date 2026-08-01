@@ -90,10 +90,12 @@
                             {{ badloData.chorsaVariants[key].weightDiff > 0 ? '+' : '' }}{{ formatDisplayNum(badloData.chorsaVariants[key].weightDiff) }}g
                         </span>
                     </div>
-                    <div>
+                   <div>
                         <span class="text-slate-400 font-semibold">Sub-Amount: </span>
-                        <span class="font-mono font-bold" [class.text-red-600]="badloData.chorsaVariants[key].netAmount > 0" [class.text-green-600]="badloData.chorsaVariants[key].netAmount <= 0">
-                            {{ badloData.chorsaVariants[key].netAmount === 0 ? 'Settled' : (badloData.chorsaVariants[key].netAmount > 0 ? 'Pay ' : 'Rec ') + fmtINR(Math.abs(badloData.chorsaVariants[key].netAmount)) }}
+                        <span class="font-mono font-bold" 
+                            [class.text-green-600]="badloData.chorsaVariants[key].netAmount >= 0" 
+                            [class.text-red-600]="badloData.chorsaVariants[key].netAmount < 0">
+                            {{ badloData.chorsaVariants[key].netAmount === 0 ? 'Settled' : (badloData.chorsaVariants[key].netAmount > 0 ? 'Rec ' : 'Pay ') + fmtINR(Math.abs(badloData.chorsaVariants[key].netAmount)) }}
                         </span>
                     </div>
                 </div>
@@ -107,11 +109,12 @@
                     {{ badloData.totalWeightDiff > 0 ? '+' : '' }}{{ formatDisplayNum(badloData.totalWeightDiff) }}g
                 </div>
             </div>
-            <div class="text-right">
+           <div class="text-right">
                 <div class="text-[9px] text-slate-400 uppercase font-black tracking-wider">Net Final Badlo Amount</div>
-                <div class="text-lg font-black font-mono" [ngClass]="badloData.totalNetAmount === 0 ? 'text-green-400' : (badloData.totalNetAmount > 0 ? 'text-red-400' : 'text-green-400')">
+                <div class="text-lg font-black font-mono" 
+                    [ngClass]="badloData.totalNetAmount === 0 ? 'text-green-400' : (badloData.totalNetAmount > 0 ? 'text-green-400' : 'text-red-400')">
                     <ng-container *ngIf="badloData.totalNetAmount !== 0">
-                        {{ badloData.totalNetAmount > 0 ? '(Pay)' : '(Rec)' }} {{ fmtINR(Math.abs(badloData.totalNetAmount)) }}
+                        {{ badloData.totalNetAmount > 0 ? '(Rec)' : '(Pay)' }} {{ fmtINR(Math.abs(badloData.totalNetAmount)) }}
                     </ng-container>
                     <ng-container *ngIf="badloData.totalNetAmount === 0">Settled</ng-container>
                 </div>

@@ -45,8 +45,12 @@
             </div>
             <div class="flex justify-between items-center pt-2 border-t border-slate-100">
                 <span class="text-[10px] font-bold text-slate-400 uppercase">Net Bill</span>
-                <span class="text-sm font-black font-mono" [ngClass]="formData.totalBillAmount >= 0 ? 'text-red-600' : 'text-green-600'">
-                    {{ formData.totalBillAmount >= 0 ? '(Pay)' : '(Rec)' }} {{ fmtINR(Math.abs(formData.totalBillAmount)) }}
+                <span class="text-sm font-black font-mono" 
+                    [ngClass]="formData.totalBillAmount === 0 ? 'text-green-600' : (formData.totalBillAmount > 0 ? 'text-green-600' : 'text-red-600')">
+                    <ng-container *ngIf="formData.totalBillAmount !== 0">
+                        {{ formData.totalBillAmount > 0 ? '(Rec)' : '(Pay)' }} {{ fmtINR(Math.abs(formData.totalBillAmount)) }}
+                    </ng-container>
+                    <ng-container *ngIf="formData.totalBillAmount === 0">Settled</ng-container>
                 </span>
             </div>
         </div>

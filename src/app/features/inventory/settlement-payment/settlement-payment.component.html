@@ -65,10 +65,16 @@
     <div class="grid grid-cols-12 gap-4 items-end">
         
         <div class="col-span-7 p-4 bg-white rounded-xl border border-slate-300 shadow-sm">
-            <div class="text-[10px] font-bold text-slate-400 uppercase mb-1">Net Payable Amount</div>
-            <div class="text-2xl font-black font-mono mb-2" [ngClass]="netPayableFinal >= 0 ? 'text-rose-600' : 'text-emerald-600'">
-                {{ netPayableFinal >= 0 ? '' : '-' }}{{ fmtINR(Math.abs(netPayableFinal)) }} 
-                <span class="text-xs font-normal ml-1 text-slate-500">{{ netPayableFinal >= 0 ? '(You Pay / Due)' : '(You Receive / Credit)' }}</span>
+            <div class="text-[10px] font-bold text-slate-400 uppercase mb-1">
+                {{ netPayableFinal === 0 ? 'Net Settled Amount' : (netPayableFinal > 0 ? 'Net Receivable Amount' : 'Net Payable Amount') }}
+            </div>
+
+            <div class="text-2xl font-black font-mono mb-2" 
+                [ngClass]="netPayableFinal === 0 ? 'text-emerald-600' : (netPayableFinal > 0 ? 'text-emerald-600' : 'text-rose-600')">
+                {{ netPayableFinal < 0 ? '-' : '' }}{{ fmtINR(Math.abs(netPayableFinal)) }} 
+                <span class="text-xs font-normal ml-1 text-slate-500">
+                    {{ netPayableFinal === 0 ? '(Settled)' : (netPayableFinal > 0 ? '(You Receive / Credit)' : '(You Pay / Due)') }}
+                </span>
             </div>
             
             <div class="border-t border-dashed border-slate-100 pt-2 space-y-1 text-[11px] font-medium text-slate-500">
@@ -78,8 +84,10 @@
                 </div>
                 <div class="flex justify-between">
                     <span>2. Department Badlo Variance Cash Amount:</span>
-                    <span class="font-mono font-bold" [class.text-red-600]="badloData?.totalNetAmount > 0" [class.text-green-600]="badloData?.totalNetAmount < 0">
-                        {{ badloData?.totalNetAmount > 0 ? '+' : '' }}{{ fmtINR(badloData?.totalNetAmount || 0) }}
+                    <span class="font-mono font-bold" 
+                        [class.text-green-600]="(badloData?.totalNetAmount || 0) > 0" 
+                        [class.text-red-600]="(badloData?.totalNetAmount || 0) < 0">
+                        {{ (badloData?.totalNetAmount || 0) > 0 ? '+' : '' }}{{ fmtINR(badloData?.totalNetAmount || 0) }}
                     </span>
                 </div>
                 <div class="flex justify-between border-t border-slate-100 pt-1 font-semibold text-slate-700">
@@ -101,8 +109,8 @@
     
     <div class="mt-4 bg-white px-4 py-2 rounded-lg border border-slate-100 flex justify-between items-center shadow-xs">
         <span class="text-xs text-slate-400 font-medium">Remaining Closing Balance (After Payment):</span>
-        <span class="text-lg font-black font-mono" [ngClass]="Math.abs(pendingBalanceFinal) < 1 ? 'text-emerald-500' : (pendingBalanceFinal > 0 ? 'text-rose-600' : 'text-emerald-600')">
-            {{ Math.abs(pendingBalanceFinal) < 1 ? 'Fully Settled (0)' : ((pendingBalanceFinal > 0 ? 'Payable: ' : 'Receivable: ') + fmtINR(Math.abs(pendingBalanceFinal))) }}
+        <span class="text-lg font-black font-mono" [ngClass]="Math.abs(pendingBalanceFinal) < 1 ? 'text-slate-500' : (pendingBalanceFinal > 0 ? 'text-emerald-600': 'text-rose-600')">
+            {{ Math.abs(pendingBalanceFinal) < 1 ? 'Fully Settled (0)' : ((pendingBalanceFinal > 0 ? 'Receivable: ' : 'Payable: ') + fmtINR(pendingBalanceFinal)) }}
         </span>
     </div>
 </div>

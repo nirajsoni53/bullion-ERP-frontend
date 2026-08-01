@@ -179,7 +179,7 @@ export class StockEntryModalComponent implements OnInit, OnChanges {
     
     this.formData.totalProfit = this.items.reduce((s, i) => s + i.profitAmount, 0);
     this.formData.totalProfitMetal = this.items.reduce((s, i) => s + i.profitWeight, 0);
-    this.formData.totalStockAmount = this.items.filter(i => !i.isBadloItem).reduce((s, i) => s + i.amount, 0);
+    this.formData.totalStockAmount = - this.items.filter(i => !i.isBadloItem).reduce((s, i) => s + i.amount, 0);
     
     this.formData.totalGoldBillWeight = this.items.filter(i => i.metalType === 'GOLD').reduce((s, i) => s + (i.fineWeight || 0), 0);
     this.formData.totalSilverBillWeight = this.items.filter(i => i.metalType === 'SILVER').reduce((s, i) => s + (i.fineWeight || 0), 0);
@@ -206,7 +206,7 @@ export class StockEntryModalComponent implements OnInit, OnChanges {
     
     // 2. globalExtraCharges is a RECEIVABLE (reduces our payable outward or adds to our collection balance)
     this.netPayableFinal = this.formData.totalBillAmount + this.totalSettlementSelected - (this.formData.globalExtraCharges || 0);
-    this.pendingBalanceFinal = this.netPayableFinal - (this.formData.paidAmount || 0);
+    this.pendingBalanceFinal = this.netPayableFinal + (this.formData.paidAmount || 0);
 
     const baseGoldPending = this.formData.totalGoldBillWeight - this.formData.goldWeightSettledSelected;
     this.formData.goldWeightPending = baseGoldPending; 
@@ -249,7 +249,6 @@ export class StockEntryModalComponent implements OnInit, OnChanges {
           roundingSign: oldGroup.roundingSign !== undefined ? oldGroup.roundingSign : -1,
           actualChorsaWeight: oldGroup.actualChorsaWeight !== undefined ? oldGroup.actualChorsaWeight : 0,
           rate: oldGroup.rate !== undefined ? oldGroup.rate : 0,
-          // UPDATED: Sub-charges field inside variant corrected to act as a direct RECEIVABLE offset
           extraCharges: oldGroup.extraCharges !== undefined ? oldGroup.extraCharges : 0, 
           sumFineWeight: 0,
           targetChorsaWeight: 0,
@@ -276,19 +275,20 @@ export class StockEntryModalComponent implements OnInit, OnChanges {
       }
       
       group.targetChorsaWeight = target;
+      // Positive diff = Customer gave extra weight (Positive/Receive)
       let diff = Number((group.actualChorsaWeight - group.targetChorsaWeight).toFixed(2));
       
       if (Math.abs(diff) < 0.01) {
         group.weightDiff = 0;
-        // FINANCIAL CORRECTION: extraCharges is Receivable. If weight variance is settled, 
-        // we owe -group.extraCharges back to calculation pool (making final amount receivable).
-        group.netAmount = Math.round(-1 * (group.extraCharges || 0));
+        // Direct receivable charges contribute positively to net amount
+        group.netAmount = Math.round(group.extraCharges || 0);
         group.rate = 0;
       } else {
         group.weightDiff = diff;
-        const valueDiffAmount = -1 * (group.weightDiff / 1000) * group.rate;
-        // FINANCIAL CORRECTION: We subtract group.extraCharges because it's a credit receivable for us.
-        group.netAmount = Math.round(valueDiffAmount - (group.extraCharges || 0));
+        // Extra weight * rate = Positive value to receive (+)
+        const valueDiffAmount = (group.weightDiff / 1000) * group.rate;
+        // Add extra charges as receivable
+        group.netAmount = Math.round(valueDiffAmount + (group.extraCharges || 0));
       }
 
       masterTotalWeightDiff += group.weightDiff;
@@ -296,7 +296,7 @@ export class StockEntryModalComponent implements OnInit, OnChanges {
     });
 
     this.badloData = {
-      totalWeightDiff: Number(masterTotalWeightDiff.toFixed(2)),
+      totalWeightDiff: masterTotalWeightDiff,
       totalNetAmount: masterTotalNetAmount,
       chorsaVariants: workingVariants
     };
