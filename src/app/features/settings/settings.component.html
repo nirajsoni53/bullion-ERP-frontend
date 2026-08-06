@@ -1,0 +1,336 @@
+<div class="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
+
+  <!-- Toast Notification -->
+  <div *ngIf="toastMessage" class="fixed top-5 right-5 z-50 bg-emerald-600 text-white px-6 py-3 rounded-xl shadow-xl flex items-center gap-2 font-semibold">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+    {{ toastMessage }}
+  </div>
+
+  <!-- Header / Action Bar -->
+  <div class="flex justify-between items-center bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+    <div>
+      <h2 class="text-2xl font-black text-slate-800 tracking-tight">Business Profile & Settings</h2>
+      <p class="text-sm text-slate-500 font-medium">Manage Bullion firm details, branding logo, tax info, and invoice defaults.</p>
+    </div>
+    <button 
+      (click)="saveSettings()" 
+      [disabled]="settingsForm.invalid"
+      class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:opacity-50 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+      Save Settings
+    </button>
+  </div>
+
+  <!-- Main Content Layout -->
+  <form [formGroup]="settingsForm" (ngSubmit)="saveSettings()" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+    <!-- Column 1 & 2: Form Controls (7 Cols) -->
+    <div class="lg:col-span-7 space-y-6">
+
+      <!-- 1. Firm Details Card -->
+      <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+        <h3 class="text-xs font-black uppercase text-slate-400 tracking-wider">1. Basic Firm Details</h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Bullion / Business Name *</label>
+            <input type="text" formControlName="name" placeholder="e.g. Royal Bullion Traders" 
+                   class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <span *ngIf="settingsForm.get('name')?.touched && settingsForm.get('name')?.hasError('required')" class="text-xs text-rose-500 font-medium mt-1 block">
+              Name is required
+            </span>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Tagline / Subtitle</label>
+            <input type="text" formControlName="tagline" placeholder="e.g. Certified Gold & Silver Dealers" 
+                   class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Address *</label>
+          <textarea formControlName="address" rows="2" placeholder="Shop / Office No, Market Name, Street" 
+                    class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+          <span *ngIf="settingsForm.get('address')?.touched && settingsForm.get('address')?.hasError('required')" class="text-xs text-rose-500 font-medium mt-1 block">
+            Address is required
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">City *</label>
+            <input type="text" formControlName="city" placeholder="City" 
+                   class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">State *</label>
+            <input type="text" formControlName="state" placeholder="State" 
+                   class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Pincode</label>
+            <input type="text" formControlName="pincode" placeholder="6-digit Pincode" maxlength="6"
+                   class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Mobile Number *</label>
+            <input type="text" formControlName="phone" placeholder="10-digit Mobile" maxlength="10"
+                   class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Email ID</label>
+            <input type="email" formControlName="email" placeholder="contact@bullion.com" 
+                   class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Tax Identification Card (Format Validation Only) -->
+      <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+        
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+          <h3 class="text-xs font-black uppercase text-slate-400 tracking-wider">2. Tax Identification & Rates</h3>
+          
+          <!-- Enable / Disable GST Toggle -->
+          <label class="inline-flex items-center cursor-pointer gap-2">
+            <span class="text-xs font-bold text-slate-600">Enable GST Billing:</span>
+            <input type="checkbox" formControlName="isGstEnabled" class="sr-only peer">
+            <div class="relative w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+          </label>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          
+          <!-- GSTIN Input (Regex format validation only) -->
+          <div>
+            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">
+              GSTIN Number 
+              <span *ngIf="!settingsForm.get('isGstEnabled')?.value" class="text-[10px] text-slate-400 lowercase">(disabled)</span>
+            </label>
+            <input type="text" formControlName="gstin" placeholder="24AAAAA0000A1Z5" 
+                   class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono uppercase font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed" />
+            
+            <span *ngIf="settingsForm.get('gstin')?.touched && settingsForm.get('gstin')?.hasError('invalidGstin') && settingsForm.get('isGstEnabled')?.value" 
+                  class="text-xs text-rose-500 font-medium mt-1 block">
+              Invalid 15-character GSTIN format
+            </span>
+          </div>
+
+          <!-- Dynamic GST Rate % -->
+          <div>
+            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">GST Rate (%)</label>
+            <input type="number" formControlName="gstRate" placeholder="3" step="0.1"
+                   class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed" />
+          </div>
+
+          <!-- PAN Number -->
+          <div>
+            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">PAN Number</label>
+            <input type="text" formControlName="pan" placeholder="ABCDE1234F" 
+                   class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono uppercase font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 3. Bank Account Details (With Account Holder Name & Auto IFSC API) -->
+      <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+        <h3 class="text-xs font-black uppercase text-slate-400 tracking-wider">3. Bank Account Details</h3>
+        
+        <div class="space-y-4">
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Account Holder Name for RTGS / NEFT -->
+            <div>
+              <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Account Holder / Beneficiary Name</label>
+              <input type="text" formControlName="accountHolderName" placeholder="e.g. Royal Bullion Traders Pvt Ltd" 
+                     class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+
+            <!-- Account Number -->
+            <div>
+              <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Account Number</label>
+              <input type="text" formControlName="accountNumber" placeholder="Account Number" 
+                     class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+          </div>
+
+          <!-- IFSC Lookup Input -->
+          <div>
+            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">IFSC Code (Auto-fetches Bank & Branch)</label>
+            <input type="text" formControlName="ifscCode" placeholder="e.g. SBIN0000300" (input)="onIfscChange()"
+                   class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono uppercase font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <span *ngIf="isLoadingBankDetails" class="text-xs text-blue-600 font-medium mt-1 block">Fetching bank details...</span>
+            <span *ngIf="ifscError" class="text-xs text-rose-500 font-medium mt-1 block">{{ ifscError }}</span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Bank Name</label>
+              <input type="text" formControlName="bankName" placeholder="Auto-filled from IFSC" readonly 
+                     class="w-full px-4 py-2.5 bg-slate-100 border border-slate-200 rounded-xl font-semibold text-slate-600 cursor-not-allowed" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Branch Name</label>
+              <input type="text" formControlName="branchName" placeholder="Auto-filled from IFSC" readonly 
+                     class="w-full px-4 py-2.5 bg-slate-100 border border-slate-200 rounded-xl font-semibold text-slate-600 cursor-not-allowed" />
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 4. Default Terms -->
+      <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+        <h3 class="text-xs font-black uppercase text-slate-400 tracking-wider">4. Default Terms & Conditions</h3>
+        <textarea formControlName="terms" rows="3" placeholder="Enter terms printed on invoice receipts..." 
+                  class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+      </div>
+
+    </div>
+
+    <!-- Column 3: Logo Upload & Dynamic Live Invoice Mockup (5 Cols) -->
+    <div class="lg:col-span-5 space-y-6">
+
+      <!-- Logo Upload Box -->
+      <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+        <h3 class="text-xs font-black uppercase text-slate-400 tracking-wider">Company Logo</h3>
+
+        <div class="flex flex-col items-center justify-center p-4 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50 relative">
+          <ng-container *ngIf="logoPreview; else noLogo">
+            <img [src]="logoPreview" alt="Logo Preview" class="h-28 object-contain mb-3" />
+            <button type="button" (click)="removeLogo()" class="px-3 py-1 bg-rose-100 text-rose-600 rounded-lg text-xs font-bold hover:bg-rose-200 transition-colors">
+              Remove Logo
+            </button>
+          </ng-container>
+
+          <ng-template #noLogo>
+            <svg class="w-10 h-10 text-slate-300 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            <p class="text-xs font-bold text-slate-500 mb-2">Upload PNG or JPG logo</p>
+            <label class="cursor-pointer px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl text-xs transition-colors">
+              Browse Image
+              <input type="file" (change)="onLogoUpload($event)" accept="image/*" class="hidden" />
+            </label>
+          </ng-template>
+        </div>
+      </div>
+
+      <!-- Sticky Dynamic Mockup Bill Card -->
+      <div class="sticky top-6 bg-slate-900 p-5 rounded-3xl text-white shadow-2xl space-y-4">
+        
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Print Tax Invoice Mockup</span>
+          <span class="text-[9px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-mono">Real-time</span>
+        </div>
+
+        <!-- Printable Invoice Sheet -->
+        <div class="bg-white text-slate-900 p-5 rounded-2xl shadow-2xl text-[11px] space-y-4 font-sans">
+          
+          <!-- Dynamic Invoice Header -->
+          <div class="flex items-start justify-between border-b border-slate-200 pb-3">
+            <div class="space-y-0.5">
+              <span class="text-[8px] font-black uppercase tracking-widest text-blue-600 block">
+                {{ settingsForm.get('isGstEnabled')?.value ? 'TAX INVOICE' : 'ESTIMATE / INVOICE' }}
+              </span>
+              <h4 class="font-black text-sm uppercase text-slate-900 leading-tight">
+                {{ settingsForm.get('name')?.value || 'YOUR BULLION NAME' }}
+              </h4>
+              <p class="text-[9px] text-slate-500 font-semibold" *ngIf="settingsForm.get('tagline')?.value">
+                {{ settingsForm.get('tagline')?.value }}
+              </p>
+              <p class="text-[9px] text-slate-500 leading-tight">
+                {{ settingsForm.get('address')?.value || 'Address Line' }}
+                <span *ngIf="settingsForm.get('city')?.value">, {{ settingsForm.get('city')?.value }}</span>
+                <span *ngIf="settingsForm.get('state')?.value">, {{ settingsForm.get('state')?.value }}</span>
+                <span *ngIf="settingsForm.get('pincode')?.value"> - {{ settingsForm.get('pincode')?.value }}</span>
+              </p>
+              <p class="text-[9px] text-slate-500 font-mono">
+                <span *ngIf="settingsForm.get('phone')?.value">Ph: {{ settingsForm.get('phone')?.value }}</span>
+                <span *ngIf="settingsForm.get('email')?.value"> | {{ settingsForm.get('email')?.value }}</span>
+              </p>
+            </div>
+            
+            <div class="shrink-0">
+              <img *ngIf="logoPreview" [src]="logoPreview" alt="Logo" class="h-10 w-10 object-contain rounded-xl border border-slate-200 p-0.5" />
+              <div *ngIf="!logoPreview" class="h-10 w-10 border border-slate-200 bg-slate-50 rounded-xl flex items-center justify-center font-black text-[8px] text-slate-400">
+                LOGO
+              </div>
+            </div>
+          </div>
+
+          <!-- Tax Metadata & GST Display -->
+          <div class="grid grid-cols-2 gap-2 text-[9px] font-mono bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+            <div *ngIf="settingsForm.get('isGstEnabled')?.value">
+              <span class="text-slate-400 font-sans">GSTIN:</span> 
+              {{ (settingsForm.get('gstin')?.value | uppercase) || '-' }}
+            </div>
+            <div>
+              <span class="text-slate-400 font-sans">PAN:</span> 
+              {{ (settingsForm.get('pan')?.value | uppercase) || '-' }}
+            </div>
+            <div><span class="text-slate-400 font-sans">Invoice #:</span> INV-2026-0001</div>
+            <div><span class="text-slate-400 font-sans">Date:</span> 01-Aug-2026</div>
+          </div>
+
+          <!-- Sample Items -->
+          <div class="space-y-1.5">
+            <div class="grid grid-cols-12 font-black text-[9px] uppercase tracking-wider text-slate-400 border-b border-slate-200 pb-1 px-1">
+              <span class="col-span-6">Description</span>
+              <span class="col-span-2 text-right">G.Wt</span>
+              <span class="col-span-4 text-right">Amount (₹)</span>
+            </div>
+
+            <div class="grid grid-cols-12 text-[10px] items-center px-1 font-medium">
+              <span class="col-span-6 font-bold text-slate-800">Gold Bar 999 Fine</span>
+              <span class="col-span-2 text-right font-mono text-slate-600">10.00g</span>
+              <span class="col-span-4 text-right font-mono font-bold text-slate-900">{{ sampleSubtotal | number:'1.2-2' }}</span>
+            </div>
+          </div>
+
+          <!-- Dynamic Tax Calculations -->
+          <div class="border-t border-slate-200 pt-2 space-y-1 text-[10px] font-mono">
+            <div class="flex justify-between text-slate-500">
+              <span>Subtotal:</span>
+              <span>₹{{ sampleSubtotal | number:'1.2-2' }}</span>
+            </div>
+            
+            <div *ngIf="settingsForm.get('isGstEnabled')?.value" class="flex justify-between text-slate-500">
+              <span>GST ({{ currentGstRate }}%):</span>
+              <span>₹{{ sampleGstAmount | number:'1.2-2' }}</span>
+            </div>
+
+            <div class="flex justify-between font-black text-xs text-slate-900 pt-1 border-t border-slate-100">
+              <span>Grand Total:</span>
+              <span>₹{{ sampleGrandTotal | number:'1.2-2' }}</span>
+            </div>
+          </div>
+
+          <!-- Dynamic Bank & Beneficiary Details Footer for RTGS/NEFT -->
+          <div class="space-y-2 pt-2 border-t border-slate-100">
+            <div class="text-[9px] bg-slate-50 p-2 rounded-xl border border-slate-100" *ngIf="settingsForm.get('bankName')?.value || settingsForm.get('accountNumber')?.value">
+              <span class="font-bold text-slate-700 block mb-0.5">Bank Settlement Account (NEFT / RTGS):</span>
+              <p class="font-mono text-slate-600 leading-tight">
+                <span *ngIf="settingsForm.get('accountHolderName')?.value"><strong>Beneficiary:</strong> {{ settingsForm.get('accountHolderName')?.value }}<br></span>
+                {{ settingsForm.get('bankName')?.value }} 
+                <span *ngIf="settingsForm.get('accountNumber')?.value">| A/C: {{ settingsForm.get('accountNumber')?.value }}</span><br>
+                <span *ngIf="settingsForm.get('ifscCode')?.value">IFSC: {{ (settingsForm.get('ifscCode')?.value | uppercase) }} </span>
+                <span *ngIf="settingsForm.get('branchName')?.value">({{ settingsForm.get('branchName')?.value }})</span>
+              </p>
+            </div>
+
+            <div class="text-[8px] text-slate-400 whitespace-pre-line leading-relaxed italic" *ngIf="settingsForm.get('terms')?.value">
+              {{ settingsForm.get('terms')?.value }}
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+  </form>
+</div>

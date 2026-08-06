@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 
 import { AppRoutingModule } from './app-routing.module';
@@ -27,6 +27,10 @@ import { ItemEntryComponent } from './features/inventory/item-entry/item-entry.c
 import { BadloCalculatorComponent } from './features/inventory/badlo-calculator/badlo-calculator.component';
 import { SettlementPaymentComponent } from './features/inventory/settlement-payment/settlement-payment.component';
 import { SettlementModalComponent } from './features/parties/settlement-modal/settlement-modal.component';
+import { SettingsComponent } from './features/settings/settings.component';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
+import { LoginComponent } from './login/login.component';
 
 @NgModule({
   declarations: [
@@ -52,13 +56,21 @@ import { SettlementModalComponent } from './features/parties/settlement-modal/se
     ItemEntryComponent,
     BadloCalculatorComponent,
     SettlementPaymentComponent,
-    SettlementModalComponent
+    SettlementModalComponent,
+    SettingsComponent,
+    LoginComponent
   ],
   imports: [
     HttpClientModule,
     BrowserModule,
     AppRoutingModule,
-    FormsModule
+    FormsModule,
+    ReactiveFormsModule,
+    RouterModule
+  ],
+  exports: [
+    HeadersComponent,
+    SettingsComponent
   ],
   providers: [],
   bootstrap: [AppComponent]

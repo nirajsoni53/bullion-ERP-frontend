@@ -1,4 +1,4 @@
-<app-headers></app-headers>
+<app-headers *ngIf="!isLoginPage"></app-headers>
 <div className="max-w-full mx-auto p-4">
   <router-outlet></router-outlet>
 </div>
